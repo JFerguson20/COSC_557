@@ -61,9 +61,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 				}
 			}
 		}
-		
-
-		
+			
 		//make image size of data with each point being a pixel
 		offscreenImage = new BufferedImage(data.length, data[0].length,
 		        BufferedImage.TYPE_INT_ARGB);;
@@ -74,7 +72,6 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 				//calculate what percentage of the max the value is
 				double perc = value/maxX;
 				offscreenGraphics.setColor(new Color(255, 255 -(int)(255*perc), 255-(int)(255*perc)));
-				offscreenGraphics.drawRect(x, y, 5, 5);
 				offscreenGraphics.fillRect(x,y,1,1);
 			}
 		}
@@ -190,16 +187,12 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		//g2.drawImage(offscreenImage, 0, 0, this);
 	    g2.setColor(Color.black);
 	    
-	    g2.drawLine(50, 500, 50, 50);
+	    //g2.drawLine(50, 500, 50, 50);
 	    
 	    drawVerticalLines(g2);
 	    drawHorizontalLines(g2);
 		// draw the mouse location
-		if (mousePoint != null && plotRectangle != null) {
-			g2.setColor(Color.LIGHT_GRAY);
-			g2.drawLine(mousePoint.x, plotRectangle.y, mousePoint.x, plotRectangle.y+plotRectangle.height);
-			g2.drawLine(plotRectangle.x, mousePoint.y, plotRectangle.x+plotRectangle.width, mousePoint.y);
-		}
+
 	}
 	
 	private void drawHorizontalLines(Graphics2D g2) {

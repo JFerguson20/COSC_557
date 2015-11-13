@@ -70,10 +70,21 @@ public class VisApp extends JPanel implements ActionListener {
 	}
 
 	private void initializePanel() {
+		Random rand = new Random();
+		int max = 10;
+		int min = 0;
+		int[][] data = new int[50][50];
+		for (int i = 0; i < data.length; i++){
+			for (int j = 0; j < data.length; j++){
+				data[i][j] = rand.nextInt((max - min) + 1) + min;
+			}
+		}
+		
+		/*
 		int[][] data = new int[][] {{1, 3, 2, 0},
 			{0, 2, 0, 0},
-			{1, 0 ,0, 0}};
-		
+			{1, 0 ,0, 2}};
+		*/
 		//Color[] colors = new Color[] {Color.green, Color.red, Color.blue, Color.white};
 		visPanel = new VisPanel(data);
 		JPanel mainPanel = (JPanel) appFrame.getContentPane();
