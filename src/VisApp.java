@@ -70,6 +70,7 @@ public class VisApp extends JPanel implements ActionListener {
 	}
 
 	private void initializePanel() {
+		/*
 		Random rand = new Random();
 		int max = 10;
 		int min = 0;
@@ -78,6 +79,31 @@ public class VisApp extends JPanel implements ActionListener {
 			for (int j = 0; j < data.length; j++){
 				data[i][j] = rand.nextInt((max - min) + 1) + min;
 			}
+		}
+		*/
+		//File f = new File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
+		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
+		int[][] data = null;
+		try {
+			Matrix2D mat = new Matrix2D(f);
+			
+			int max = mat.getMaxVal();
+			int min = mat.getMinVal();
+			
+			//data = new int[mat.getNumRows()][mat.getNumCols()];
+			data = new int[mat.getNumCols()][mat.getNumRows()];
+			
+			for (int i = 0; i < data.length; i++){
+				for (int j = 0; j < data[i].length; j++){
+					data[i][j] = mat.getPFamCount(j, i);
+				}
+			}
+			
+			
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 		/*
