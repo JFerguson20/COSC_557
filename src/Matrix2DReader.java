@@ -31,7 +31,7 @@ public class Matrix2DReader {
 				
 				// split string on tab character for .tsv
 				String[] parts = line.split("\\t");
-				for(int i=0; i<parts.length; i++){
+				for(int i=1; i<parts.length; i++){
 					pFamNames.add(parts[i]);
 				}
 				line_counter++;
