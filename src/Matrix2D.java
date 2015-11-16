@@ -41,10 +41,12 @@ public class Matrix2D {
 	public Integer getPFamCount(int genomeRowID, int pFamColID) {
 		return matrix.get(genomeRowID)[pFamColID].getPFamCount();
 	}
-
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+	
+	public String getPFamName(int pFamColID) {
+		return pFamNames.get(pFamColID);
 	}
-
+	
+	public String getGenomeName(int genomeRowID) {
+		return genomeNames.get(genomeRowID);
+	}
 }
