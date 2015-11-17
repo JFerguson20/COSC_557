@@ -12,28 +12,35 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 
 public class VisPanel extends JPanel implements MouseListener, MouseMotionListener, ComponentListener {
 	
 	private int data[][];
-	private float maxX, minX, maxY, minY;
+	private float max, min;
 	// defines the region inside the plot axes
 	private Rectangle plotRectangle;
 	// defines a border around the plot
 	private int borderSize = 10; 
-	// shape of the data marks
-	private Shape dataShape = new Ellipse2D.Float(0.f, 0.f, 5.f, 5.f);
 	// color of the data marks
-	private Color dataColor = new Color(50, 50, 50, 150);
+	private boolean showGrid = true;
 	private boolean antialiasEnabled = true;
-	private Point mousePoint;
+	private Point mousePoint = new Point();
 	
 	// for drawing the plot offscreen for better efficiency
 	private BufferedImage offscreenImage;
 	private Graphics2D offscreenGraphics;
+	
+	private BufferedImage offscreenGrid;
+	private Graphics2D gridGraphics;
+	private BufferedImage resized;
+	private Graphics2D resizedG2;
+	private AffineTransform xform;
 	
 	public VisPanel (int[][] theData) {
 		setData(theData);
@@ -48,38 +55,28 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		this.data = data;
 	
 		//find min and max values
-		maxX = Float.MIN_VALUE;
-		minX = Float.MAX_VALUE;
+		max = Float.MIN_VALUE;
+		min = Float.MAX_VALUE;
 		for (int i = 0; i < data.length; i++) {
 			for(int j = 0; j < data[0].length; j++){
 				int value = data[i][j];
-				if (value > maxX) {
-					maxX = value;
+				if (value > max) {
+					max = value;
 				}
-				if (value < minX) {
-					minX = value;
+				if (value < min) {
+					min = value;
 				}
 			}
 		}
 			
-		//make image size of data with each point being a pixel
-		offscreenImage = new BufferedImage(data.length, data[0].length,
-		        BufferedImage.TYPE_INT_ARGB);;
-		offscreenGraphics = offscreenImage.createGraphics();
-		for (int x = 0; x < data.length; x++) {
-			for (int y = 0; y < data[0].length; y++) {
-				int value = data[x][y];
-				//calculate what percentage of the max the value is
-				double perc = value/maxX;
-				offscreenGraphics.setColor(new Color(255, 255 -(int)(255*perc), 255-(int)(255*perc)));
-				offscreenGraphics.fillRect(x,y,1,1);
-			}
-		}
+		
+		//draw lines 
 		        
 		layoutPlot();
 		//calculatePoints();
 		repaint();
 	}
+	
 	
 	private void layoutPlot() {
 
@@ -96,10 +93,39 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		
 		// get the dimensions of the plot region for later use
 		int left = borderSize + xOffset;
-		int right = xOffset + (plotSize - (borderSize*2));
-		int bottom = yOffset + (plotSize - (borderSize*2));
+		int right = xOffset + (getWidth() - (borderSize*2));
+		int bottom = yOffset + (getHeight() - (borderSize*2));
 		int top = borderSize + yOffset;
 		plotRectangle = new Rectangle(left, top, (right-left), (bottom-top));
+		
+		drawImage();
+	}
+	
+	private void drawImage(){
+		
+
+		//make image size of data with each point being a pixel
+		offscreenImage = new BufferedImage(data.length, data[0].length,
+		        BufferedImage.TYPE_INT_ARGB);
+		offscreenGraphics = offscreenImage.createGraphics();
+		
+		int cellSize = getWidth() / data.length;
+		
+		for (int x = 0; x < data.length; x++) {
+			for (int y = 0; y < data[0].length; y++) {
+				int value = data[x][y];
+				//calculate what percentage of the max the value is
+				double perc = value/max;
+				offscreenGraphics.setColor(new Color(255, 255 -(int)(255*perc), 255-(int)(255*perc)));
+				offscreenGraphics.fillRect(x,y, 1,1);
+			}
+		}
+		//scale image here so we can reverse it.
+		resized = new BufferedImage(data.length * 3, data[0].length *3,BufferedImage.TYPE_INT_ARGB);
+		resizedG2 = resized.createGraphics();
+		xform = AffineTransform.getScaleInstance(3.0, 3.0);
+	    resizedG2.drawImage(offscreenImage, xform, null);
+		
 	}
 	
 	// converts x value to screen pixel location
@@ -116,48 +142,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		return y;
 	}
 	
-	// computes the x and y pixel locations for scatterplot data
-	/*
-	private void calculatePoints() {
-		// nothing to compute
-		if (xValues == null || yValues == null) {
-			return;
-		}
-		
-		xPoints = new int[xValues.length];
-		for (int i = 0; i < xValues.length; i++) {
-			xPoints[i] = toScreenX(xValues[i], minX, maxX, 0, plotRectangle.width);
-		}
-		
-		yPoints = new int[yValues.length];
-		for (int i = 0; i < yValues.length; i++) {
-			yPoints[i] = toScreenY(yValues[i], minY, maxY, 0, plotRectangle.height);
-		}
-	}
-	*/
-	/*
-	private void render(Graphics2D g2) {
-		if (xPoints != null && yPoints != null) {
-			g2.setColor(dataColor);
-			g2.translate(plotRectangle.x, plotRectangle.y);
-			
-			for (int i = 0; i < xPoints.length; i++) {
-				int x = xPoints[i] - (int)(dataShape.getBounds2D().getWidth() / 2.);
-				int y = yPoints[i] - (int)(dataShape.getBounds2D().getHeight() / 2.);
-				
-				g2.translate(x, y);
-				g2.draw(dataShape);
-				g2.translate(-x, -y);
-			}
-			
-			g2.translate(-plotRectangle.x, -plotRectangle.y);
-			
-			g2.setStroke(new BasicStroke(2.f));
-			g2.setColor(Color.LIGHT_GRAY);
-			g2.draw(plotRectangle);
-		}
-	}
-	*/
+
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D)g;
@@ -173,8 +158,9 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		// code below draws in offscreen image for buffering and greater efficiency
 	
 		//offscreenImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-	    g2.drawImage(offscreenImage, 31, 31, getWidth() - 30, getHeight() - 30, 0, 0,
-	    		offscreenImage.getWidth(), offscreenImage.getHeight(), null);
+	    //g2.drawImage(offscreenImage, borderSize, borderSize, getWidth() - borderSize, getHeight() - borderSize, 0, 0,
+	    	//	offscreenImage.getWidth(), offscreenImage.getHeight(), null);
+
 		//Graphics2D offscreenImageGraphics = (Graphics2D)offscreenImage.getGraphics();
 	    /*
 		if (antialiasEnabled) {
@@ -182,50 +168,69 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 			offscreenImageGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		}
 		*/
-		//render(offscreenImageGraphics);
 	
-		//g2.drawImage(offscreenImage, 0, 0, this);
-	    g2.setColor(Color.black);
-	    
+		g2.drawImage(resized, borderSize, borderSize, this);
+	
+    
 	    //g2.drawLine(50, 500, 50, 50);
-	    
-	    drawVerticalLines(g2);
-	    drawHorizontalLines(g2);
-		// draw the mouse location
+		
+	    if(showGrid){
+		    drawVerticalLines(g2);
+		    //drawHorizontalLines(g2);
+	    }else{
+	    	drawCrosshair(g2);
+	    }
+		
 
+	}
+	
+	private void drawCrosshair(Graphics2D g2){
+		
 	}
 	
 	private void drawHorizontalLines(Graphics2D g2) {
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	private void drawVerticalLines(Graphics2D g2) {
-		// TODO Auto-generated method stub
 		
 	}
-
+	
+	
+	public void toggleGrid() {
+		showGrid = !showGrid;
+	}
+	
 	@Override
 	public void mouseDragged(MouseEvent e) {
 	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		/*
+		
 		if (plotRectangle != null) {
-			if (plotRectangle.contains(e.getPoint())) {
-				mousePoint = e.getPoint();
-				repaint();
-			} else {
-				mousePoint = null;
-				repaint();
-			}
-		}
-		*/
-	}
+		
+			mousePoint = e.getPoint();
 
+		}
+		
+		//Do the inverse transform
+		Point2D p = null;
+		//System.out.println(mousePoint.getX());
+		try {
+			p = xform.inverseTransform(new Point2D.Double(mousePoint.getX() - borderSize, mousePoint.getY() - borderSize), null);
+		} catch (NoninvertibleTransformException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		System.out.println("x="+p.getX()+" y="+p.getY());
+	}
+	
+
+	
 	@Override
 	public void mouseClicked(MouseEvent e) {
+
 	}
 
 	@Override
@@ -250,6 +255,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	public void componentResized(ComponentEvent e) {
 		
 		layoutPlot();
+		//calculateGrid();
 		//calculatePoints();
 		repaint();
 	}
@@ -265,4 +271,6 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	@Override
 	public void componentHidden(ComponentEvent e) {
 	}
+
+
 }
