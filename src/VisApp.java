@@ -11,15 +11,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 
-
 public class VisApp extends JPanel implements ActionListener {
 	private JFrame appFrame;
 	private VisPanel visPanel;
-	JComboBox<String> yAxis;
-	JComboBox<String> xAxis;
-	JComboBox<String> thirdVariable;
-	boolean csvLoaded = false;
-
 
 	public VisApp() {
 		initialize();
@@ -54,19 +48,19 @@ public class VisApp extends JPanel implements ActionListener {
 		mi.addActionListener(this);
 		mi.setActionCommand("exit");
 		file.add(mi);
-		
-		//Options menu
+
+		// Options menu
 		JMenu options = new JMenu("Options");
 		menuBar.add(options);
-		
-		//Toggle Grid
+
+		// Toggle Grid
 		JMenuItem grid = new JMenuItem("Toggle Grid", KeyEvent.VK_G);
 		grid.addActionListener(this);
 		grid.setActionCommand("toggle grid");
 		grid.setEnabled(false);
 		options.add(grid);
-		
-		//Change colors
+
+		// Change colors
 		JMenuItem colors = new JMenuItem("Change Colors", KeyEvent.VK_C);
 		colors.addActionListener(this);
 		colors.setActionCommand("change colors");
@@ -76,29 +70,28 @@ public class VisApp extends JPanel implements ActionListener {
 
 	private void initializePanel() {
 
-		//File f = new File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
+		// File f = new
+		// File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
 		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
 		int[][] data = null;
 		try {
 			Matrix2D mat = new Matrix2D(f);
-			
+
 			int max = mat.getMaxVal();
 			int min = mat.getMinVal();
-			
-			//data = new int[mat.getNumRows()][mat.getNumCols()];
+
+			// data = new int[mat.getNumRows()][mat.getNumCols()];
 			data = new int[mat.getNumCols()][mat.getNumRows()];
-			
+
 			System.out.println(max);
 			System.out.println(min);
-			
-			for (int i = 0; i < data.length; i++){
-				for (int j = 0; j < data[i].length; j++){
+
+			for (int i = 0; i < data.length; i++) {
+				for (int j = 0; j < data[i].length; j++) {
 					data[i][j] = mat.getPFamCount(j, i);
 				}
 			}
-			
-			
-			
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -107,7 +100,10 @@ public class VisApp extends JPanel implements ActionListener {
 		JPanel mainPanel = (JPanel) appFrame.getContentPane();
 		mainPanel.setLayout(new BorderLayout());
 		mainPanel.add(visPanel, BorderLayout.CENTER);
-		visPanel.setLayout(null);	
+		visPanel.setLayout(null);
+		
+		
+		
 	}
 
 	public static void main(String args[]) {
@@ -120,12 +116,12 @@ public class VisApp extends JPanel implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		
-		if(event.getActionCommand().equals("toggle grid")){
+
+		if (event.getActionCommand().equals("toggle grid")) {
 			visPanel.toggleGrid();
-		}else if (event.getActionCommand().equals("change colors")){
-			
-		}else if (event.getActionCommand().equals("exit")){
+		} else if (event.getActionCommand().equals("change colors")) {
+
+		} else if (event.getActionCommand().equals("exit")) {
 			System.exit(0);
 		}
 	}
