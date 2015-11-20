@@ -76,7 +76,6 @@ public class VisApp extends JPanel implements ActionListener {
 		try {
 			mat = new Matrix2D(f);
 			// data = new int[mat.getNumRows()][mat.getNumCols()];
-			System.out.println("HERE");
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
