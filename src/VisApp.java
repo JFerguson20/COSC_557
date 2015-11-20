@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -54,10 +53,10 @@ public class VisApp extends JPanel implements ActionListener {
 		menuBar.add(options);
 
 		// Toggle Grid
-		JMenuItem grid = new JMenuItem("Toggle Grid", KeyEvent.VK_G);
+		JMenuItem grid = new JMenuItem("Toggle Hover", KeyEvent.VK_T);
 		grid.addActionListener(this);
-		grid.setActionCommand("toggle grid");
-		grid.setEnabled(false);
+		grid.setActionCommand("toggle hover");
+		grid.setEnabled(true);
 		options.add(grid);
 
 		// Change colors
@@ -73,30 +72,18 @@ public class VisApp extends JPanel implements ActionListener {
 		// File f = new
 		// File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
 		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
-		int[][] data = null;
+		Matrix2D mat = null;
 		try {
-			Matrix2D mat = new Matrix2D(f);
-
-			int max = mat.getMaxVal();
-			int min = mat.getMinVal();
-
+			mat = new Matrix2D(f);
 			// data = new int[mat.getNumRows()][mat.getNumCols()];
-			data = new int[mat.getNumCols()][mat.getNumRows()];
-
-			System.out.println(max);
-			System.out.println(min);
-
-			for (int i = 0; i < data.length; i++) {
-				for (int j = 0; j < data[i].length; j++) {
-					data[i][j] = mat.getPFamCount(j, i);
-				}
-			}
+			System.out.println("HERE");
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		visPanel = new VisPanel(data);
+		
+		visPanel = new VisPanel(mat);
 		JPanel mainPanel = (JPanel) appFrame.getContentPane();
 		mainPanel.setLayout(new BorderLayout());
 		mainPanel.add(visPanel, BorderLayout.CENTER);
@@ -117,8 +104,8 @@ public class VisApp extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent event) {
 
-		if (event.getActionCommand().equals("toggle grid")) {
-			visPanel.toggleGrid();
+		if (event.getActionCommand().equals("toggle hover")) {
+			visPanel.toggleTooltip();
 		} else if (event.getActionCommand().equals("change colors")) {
 
 		} else if (event.getActionCommand().equals("exit")) {

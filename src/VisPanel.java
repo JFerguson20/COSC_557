@@ -4,7 +4,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -15,18 +14,18 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-
+import java.util.ArrayList;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class VisPanel extends JPanel implements MouseListener, MouseMotionListener, ComponentListener {
-
-	private int data[][];
-	private float max, min;
+	
+	private Matrix2D wholeMatrix;
+	private int max, min;
 	// defines a border around the plot
 	private int borderSize = 10;
 	// color of the data marks
-	private boolean showGrid = true;
+	private boolean showTooltip = true;
 	private boolean antialiasEnabled = true;
 	private Point mousePoint = new Point();
 	private Point2D mouseScaled = null; // index of row and col
@@ -42,91 +41,68 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	private int cellRow = 0;
 	private int cellCol = 0;
 	
+	//can use this to keep index's of rows we selected.
+	private ArrayList<Integer> selectedRows;
+	
+	//labels to show hovered over points
 	JLabel valLabel;
+	JLabel genomeLabel;
+	JLabel pfamLabel;
 	
 
-	public VisPanel(int[][] theData) {
-		setData(theData);
+	public VisPanel(Matrix2D mat) {
+		wholeMatrix = mat;
+		selectedRows = new ArrayList<Integer>();
 		addComponentListener(this);
 		addMouseListener(this);
 		addMouseMotionListener(this);
-		
+		max = mat.getMaxVal();
+		min = mat.getMinVal();
 		valLabel = new JLabel();
+		genomeLabel = new JLabel();
+		pfamLabel = new JLabel();
 		add(valLabel);
-	}
-
-	// sets the data values and forces the panel to layout the boundaries and
-	// compute data points
-	public void setData(int[][] data) {
-		this.data = data;
-
-		// find min and max values
-		max = Float.MIN_VALUE;
-		min = Float.MAX_VALUE;
-		for (int i = 0; i < data.length; i++) {
-			for (int j = 0; j < data[0].length; j++) {
-				int value = data[i][j];
-				if (value > max) {
-					max = value;
-				}
-				if (value < min) {
-					min = value;
-				}
-			}
-		}
-
-		// draw lines
-
-		layoutPlot();
-		// calculatePoints();
+		add(genomeLabel);
+		add(pfamLabel);
+		drawImage();
 		repaint();
 	}
-
-	private void layoutPlot() {
-
-		// forces the scatterplot to be square using the smaller dimension
-		// (width or height)
-		int plotSize = getWidth();
-		if (getHeight() < getWidth()) {
-			plotSize = getHeight();
-		}
-
-		// centers the scatterplot in the middle of the panel
-		int xOffset = (getWidth() - plotSize) / 2;
-		int yOffset = (getHeight() - plotSize) / 2;
-
-		// get the dimensions of the plot region for later use
-		int left = borderSize + xOffset;
-		int right = xOffset + (getWidth() - (borderSize * 2));
-		int bottom = yOffset + (getHeight() - (borderSize * 2));
-		int top = borderSize + yOffset;
-		new Rectangle(left, top, (right - left), (bottom - top));
-
-		drawImage();
-	}
-
+	
+	//call when the data changes
 	private void drawImage() {
-
+		
+		int numCols = wholeMatrix.getNumCols();
+		int numRows = wholeMatrix.getNumRows();
+		
 		// make image size of data with each point being a pixel
-		offscreenImage = new BufferedImage(data.length, data[0].length, BufferedImage.TYPE_INT_ARGB);
+		offscreenImage = new BufferedImage(numCols, numCols, BufferedImage.TYPE_INT_ARGB);
 		offscreenGraphics = offscreenImage.createGraphics();
 
-		for (int x = 0; x < data.length; x++) {
-			for (int y = 0; y < data[0].length; y++) {
-				int value = data[x][y];
+		for (int i = 0; i < numCols; i++) {
+			for (int j = 0; j < numRows; j++) {
+				int value = wholeMatrix.getPFamCount(j, i);
+				
 				// calculate what percentage of the max the value is
-				double perc = value / max;
+				double perc = (value * 1.0) / (1.0 *max);
 				offscreenGraphics.setColor(new Color(255, 255 - (int) (255 * perc), 255 - (int) (255 * perc)));
-				offscreenGraphics.fillRect(x, y, 1, 1);
+				offscreenGraphics.fillRect(i, j, 1, 1);
 			}
 		}
 
-		// scale the image
-		double widthScaled = (1.0 * getWidth() - (borderSize * 2)) / (1.0 * data.length);
-		double heightScaled = (1.0 * getHeight() - (borderSize * 2)) / (1.0 * data[0].length);
+		scaleImage();
 
-		int width = (int) (widthScaled * data.length);
-		int height = (int) (heightScaled * data[0].length);
+	}
+	
+	//call when window size is changed.
+	private void scaleImage() {
+		int numCols = wholeMatrix.getNumCols();
+		int numRows = wholeMatrix.getNumRows();
+		// scale the image
+		double widthScaled = (1.0 * getWidth() - (borderSize * 2)) / (1.0 * numCols);
+		double heightScaled = (1.0 * getHeight() - (borderSize * 2)) / (1.0 * numRows);
+
+		int width = (int) (widthScaled * numCols);
+		int height = (int) (heightScaled * numRows);
 		if (width <= 0 || height <= 0) {
 			width = 1;
 			height = 1;
@@ -136,7 +112,6 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		resizedG2 = resized.createGraphics();
 		xform = AffineTransform.getScaleInstance(widthScaled, heightScaled);
 		resizedG2.drawImage(offscreenImage, xform, null);
-
 	}
 
 	// converts x value to screen pixel location
@@ -162,65 +137,62 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		if (antialiasEnabled) {
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+			resizedG2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			resizedG2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		}
-
-		// code below draws in offscreen image for buffering and greater
-		// efficiency
-
-		// offscreenImage = new BufferedImage(getWidth(), getHeight(),
-		// BufferedImage.TYPE_INT_ARGB);
-		// g2.drawImage(offscreenImage, borderSize, borderSize, getWidth() -
-		// borderSize, getHeight() - borderSize, 0, 0,
-		// offscreenImage.getWidth(), offscreenImage.getHeight(), null);
-
-		// Graphics2D offscreenImageGraphics =
-		// (Graphics2D)offscreenImage.getGraphics();
-		/*
-		 * if (antialiasEnabled) {
-		 * offscreenImageGraphics.setRenderingHint(RenderingHints.
-		 * KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		 * offscreenImageGraphics.setRenderingHint(RenderingHints.
-		 * KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON); }
-		 */
 
 		g2.drawImage(resized, borderSize, borderSize, this);
 
 		//g2.setColor(Color.BLACK);
 		//g2.drawLine(50, 500, 50, 50);
-		
-		if (showGrid) {
-			drawVerticalLines(g2);
-			drawHorizontalLines(g2);
-		} else {
-			drawCrosshair(g2);
-		}
-		
-		if ((cellRow >= 0 && cellCol >= 0) && cellCol < data.length && cellRow < data[0].length)
-			drawValLabel(g2);
 
-	}
-
-	private void drawCrosshair(Graphics2D g2) {
-		
+		highlightSelectRows(g2);
+		//make sure mouse is on plot and showTooltip is true
+		if ((cellRow >= 0 && cellCol >= 0) && cellCol < wholeMatrix.getNumCols() && cellRow < wholeMatrix.getNumRows() && showTooltip)
+			drawLabels(g2);
 	}
 	
-	private void drawValLabel(Graphics2D g2) {
+	//draw the count, genome name, and pfam when hovering over a point
+	private void drawLabels(Graphics2D g2) {
+		g2.setColor(Color.BLACK);
 		Font labelFont = valLabel.getFont();
-		valLabel.setText(Integer.toString(data[cellCol][cellRow]));
+		//draw rectangle to put our values in
+		g2.drawRect(mousePoint.x + 15, mousePoint.y - 30, 100, 55);
+		g2.setColor(new Color(100, 100, 100, 50));
+		g2.fillRect(mousePoint.x + 15, mousePoint.y - 30, 100, 55);
+		//draw value
+		valLabel.setText("Count: " +Integer.toString(wholeMatrix.getPFamCount(cellRow, cellCol)));
 		valLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
-		valLabel.setBounds(mousePoint.x + 15, mousePoint.y - 15, 45, 15);
+		valLabel.setBounds(mousePoint.x + 15, mousePoint.y - 30, 75, 15);
+		//draw genome
+		genomeLabel.setText(wholeMatrix.getGenomeName(cellRow));
+		genomeLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
+		genomeLabel.setBounds(mousePoint.x + 15, mousePoint.y - 10, 100, 15);
+		//draw pfam
+		pfamLabel.setText(wholeMatrix.getPFamName(cellCol));
+		pfamLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
+		pfamLabel.setBounds(mousePoint.x + 15, mousePoint.y + 10, 75, 15);
+	}
+	
+	private void highlightSelectRows(Graphics2D g2){
+		for (int row : selectedRows){
+			drawHorizontalLine(g2, row);
+		}
+	}
+	
+	private void drawHorizontalLine(Graphics2D g2, int row) {
+
+	}
+	
+	private void drawVerticalLine(Graphics2D g2, int col) {
+
 	}
 
-	private void drawHorizontalLines(Graphics2D g2) {
-
-	}
-
-	private void drawVerticalLines(Graphics2D g2) {
-
-	}
-
-	public void toggleGrid() {
-		showGrid = !showGrid;
+	public void toggleTooltip() {
+		showTooltip= !showTooltip;
+		valLabel.setText(null);
+		genomeLabel.setText(null);
+		pfamLabel.setText(null);
 	}
 
 	@Override
@@ -247,9 +219,6 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		cellCol = (int) mouseScaled.getX();
 		
 		//may need to remove this later so we arent always redrawing
-		//layoutPlot();
-		// calculateGrid();
-		// calculatePoints();
 		repaint();
 	}
 
@@ -278,10 +247,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-
-		layoutPlot();
-		// calculateGrid();
-		// calculatePoints();
+		scaleImage();
 		repaint();
 	}
 
