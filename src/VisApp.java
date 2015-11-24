@@ -1,25 +1,33 @@
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.geom.NoninvertibleTransformException;
 import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class VisApp extends JPanel implements ActionListener {
 	private JFrame appFrame;
 	private VisPanel visPanel;
-
-	public VisApp() {
+    private Matrix2DVis zoomPanel;
+    public UpdateSliderEvent updateSlider = new UpdateSliderEvent();
+    JSlider zoomSlider;
+    
+	public VisApp() throws NoninvertibleTransformException {
 		initialize();
 		appFrame.setVisible(true);
 	}
 
-	private void initialize() {
+	private void initialize() throws NoninvertibleTransformException {
 		appFrame = new JFrame();
 		appFrame.setTitle("Matrix Vis");
 		appFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -65,12 +73,13 @@ public class VisApp extends JPanel implements ActionListener {
 		colors.setActionCommand("change colors");
 		colors.setEnabled(false);
 		options.add(colors);
+		
+		//appFrame.set
 	}
 
-	private void initializePanel() {
+	private void initializePanel() throws NoninvertibleTransformException {
 
-		// File f = new
-		// File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
+		//File f = new File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
 		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
 		Matrix2D mat = null;
 		try {
@@ -82,11 +91,24 @@ public class VisApp extends JPanel implements ActionListener {
 			e.printStackTrace();
 		}
 		
-		visPanel = new VisPanel(mat);
+		//visPanel = new VisPanel(mat);
+		zoomPanel = new Matrix2DVis(mat);
+		zoomPanel.setSliderListener(updateSlider);
 		JPanel mainPanel = (JPanel) appFrame.getContentPane();
 		mainPanel.setLayout(new BorderLayout());
-		mainPanel.add(visPanel, BorderLayout.CENTER);
-		visPanel.setLayout(null);
+		mainPanel.add(zoomPanel, BorderLayout.CENTER);
+		
+		zoomSlider = new JSlider();
+		zoomSlider.setLayout(new FlowLayout(FlowLayout.TRAILING));
+		zoomSlider.setMajorTickSpacing(5);
+		zoomSlider.setPaintTicks(true);
+		zoomSlider.setSize(200, 200);
+		zoomSlider.setVisible(true);
+		zoomSlider.addChangeListener(zoomPanel.sliderMovement);
+		mainPanel.add(zoomSlider, BorderLayout.PAGE_END);
+		
+		mainPanel.setVisible(true);
+		//visPanel.setLayout(null);
 		
 		
 		
@@ -95,7 +117,12 @@ public class VisApp extends JPanel implements ActionListener {
 	public static void main(String args[]) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
-				VisApp app = new VisApp();
+				try {
+					VisApp app = new VisApp();
+				} catch (NoninvertibleTransformException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
 	}
@@ -111,4 +138,17 @@ public class VisApp extends JPanel implements ActionListener {
 			System.exit(0);
 		}
 	}
+	
+    public class UpdateSliderEvent implements SliderListener {
+		public void  updateSlider(double newVal) {
+			System.out.println("newVal: " + newVal);
+			//zoomPanel.updateFromKeys   = false;
+			//zoomPanel.updateFromSlider = true;
+			zoomSlider.setValue((int)(newVal * 100.f));
+		}
+    }
+    
+    public interface SliderListener {
+        public void updateSlider(double newVal);
+    }
 }

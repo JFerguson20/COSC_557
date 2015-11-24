@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -28,6 +29,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	// color of the data marks
 	private boolean showTooltip = true;
 	private boolean antialiasEnabled = true;
+	private boolean zoomApplied = false;
 	private Point mousePoint = new Point();
 	private Point2D mouseScaled = null; // index of row and col
 	// for drawing the plot offscreen for better efficiency
@@ -41,6 +43,12 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	// what we are hovering over
 	private int cellRow = 0;
 	private int cellCol = 0;
+	
+	private double zoomPerc = 1.0f;
+	private double zoomWidth = 1.0f;
+	private double zoomHeight = 1.0f;
+	
+	private Dimension prevPrefSize = new Dimension();
 
 	// can use this to keep index's of rows we selected.
 	private ArrayList<Integer> selectedRows;
@@ -50,7 +58,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	JLabel genomeLabel;
 	JLabel pfamLabel;
 
-	public VisPanel(Matrix2D mat) {
+	public VisPanel(Matrix2D mat) throws NoninvertibleTransformException {
 		wholeMatrix = mat;
 		selectedRows = new ArrayList<Integer>();
 		addComponentListener(this);
@@ -66,10 +74,11 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		add(pfamLabel);
 		drawImage();
 		repaint();
+		prevPrefSize.setSize(getWidth(), getHeight());
 	}
 
 	// call when the data changes
-	private void drawImage() {
+	private void drawImage() throws NoninvertibleTransformException {
 
 		int numCols = wholeMatrix.getNumCols();
 		int numRows = wholeMatrix.getNumRows();
@@ -89,29 +98,83 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 			}
 		}
 
-		scaleImage();
-
+		scaleImage(false);
+	}
+	
+	public Dimension getPreferredSize() {
+		Dimension prefSize = new Dimension();
+		prefSize.setSize(prevPrefSize.getWidth(), prevPrefSize.getHeight());
+		if(zoomApplied) {
+			prefSize.setSize(zoomWidth, zoomHeight);
+			zoomApplied = false;
+			prevPrefSize.setSize(prefSize);
+		}
+		return prefSize;
+	}
+	
+	public void applyZoom(double zoomPercentage) {
+		zoomApplied = true;
+		zoomPerc = zoomPercentage;
+		
+		scaleImage(true);
+		zoomWidth = (double)resized.getWidth() * zoomPerc;
+		zoomHeight = (double)resized.getHeight() *zoomPerc;
+		repaint();
 	}
 
-	// call when window size is changed.
-	private void scaleImage() {
+	private double getWidthScaleFactor() {
 		int numCols = wholeMatrix.getNumCols();
-		int numRows = wholeMatrix.getNumRows();
-		// scale the image
+		
+		// scale the width
 		double widthScaled = (1.0 * getWidth() - (borderSize * 2)) / (1.0 * numCols);
-		double heightScaled = (1.0 * getHeight() - (borderSize * 2)) / (1.0 * numRows);
-
-		int width = (int) (widthScaled * numCols);
-		int height = (int) (heightScaled * numRows);
-		if (width <= 0 || height <= 0) {
-			width = 1;
-			height = 1;
+		return widthScaled;
+		
+	}
+	
+	private double getHeightScaleFactor() {
+		int numRows = wholeMatrix.getNumRows();
+		
+		// scale the width
+		double heightScaled = (1.0 * getHeight() - (borderSize * 2)) / (1.0 * numRows);		
+		return heightScaled;
+	}
+	
+	// call when window size is changed.
+	private void scaleImage(boolean isZoom)  {
+		
+		double widthScale  = getWidthScaleFactor();
+		double heightScale = getHeightScaleFactor();
+		
+		int width = (int) ((getWidthScaleFactor() * (double)wholeMatrix.getNumCols()) + 0.5f);
+		int height = (int) ((getHeightScaleFactor() * (double)wholeMatrix.getNumRows()) + 0.5f);
+		
+		if(isZoom) {	
+			width  = (int)(((double)resized.getWidth() + 2*borderSize)  * zoomPerc);
+			if(width < getWidth()) { width = getWidth() + 2*borderSize;   }
+			height = (int)(((double)resized.getHeight() + 2*borderSize) * zoomPerc);
+			if(height < getHeight()) { height = getHeight() + 2*borderSize; }
+			
+			resizedG2.setColor(getBackground());
+			resizedG2.fillRect(0, 0, width, height);
+			//resizedG2.translate(width/2, height/2);
+			resizedG2.translate(cellCol, cellRow);
+			resizedG2.scale(zoomPerc, zoomPerc);
+			resizedG2.translate(-cellCol, -cellRow);
+			//resizedG2.translate(-width/2, -height/2);
+			resizedG2.drawImage(offscreenImage, xform, null);
 		}
-		// scale image here so we can reverse it.
-		resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		resizedG2 = resized.createGraphics();
-		xform = AffineTransform.getScaleInstance(widthScaled, heightScaled);
-		resizedG2.drawImage(offscreenImage, xform, null);
+		else {		
+			if (width <= 0 || height <= 0) { width = 1; height = 1;	}
+			
+			resized = null;
+			resizedG2 = null;
+			// scale image here so we can reverse it.
+			resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+			resizedG2 = resized.createGraphics();
+			xform = AffineTransform.getScaleInstance(widthScale, heightScale);
+			resizedG2.drawImage(offscreenImage, xform, null);
+		}
+		
 	}
 
 	public void paintComponent(Graphics g) {
@@ -126,8 +189,8 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 			resizedG2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 			resizedG2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		}
-
 		g2.drawImage(resized, borderSize, borderSize, this);
+		
 
 		// g2.setColor(Color.BLACK);
 		// g2.drawLine(50, 500, 50, 50);
@@ -163,6 +226,17 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		pfamLabel.setText(wholeMatrix.getPFamName(cellCol));
 		pfamLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
 		pfamLabel.setBounds(mousePoint.x + 15, mousePoint.y - 35, 75, 15);
+	}
+	
+	public Point getMousePoint() {
+		Point p = new Point(cellCol, cellRow);
+		return p;
+	}
+	
+	public void setMousePoint(int x, int y) {
+		cellCol = x;
+		cellRow = y;
+		repaint();
 	}
 
 	private void highlightSelectRows(Graphics2D g2) {
@@ -325,7 +399,8 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-		scaleImage();
+
+		scaleImage(false);
 		repaint();
 	}
 
