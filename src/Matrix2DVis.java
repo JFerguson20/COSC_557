@@ -41,8 +41,8 @@ public class Matrix2DVis extends JScrollPane {
 	public ZoomSliderEvent sliderMovement    = new ZoomSliderEvent();
 	public VisApp.UpdateSliderEvent updateSlider;
 	
-	public Matrix2DVis(Matrix2D mat) throws NoninvertibleTransformException {
-		imagePanel = new VisPanel(mat); 
+	public Matrix2DVis(Matrix2D mat, VisApp mainApp) throws NoninvertibleTransformException {
+		imagePanel = new VisPanel(mat, mainApp); 
 		
 		initializeScrollPane();
 	}

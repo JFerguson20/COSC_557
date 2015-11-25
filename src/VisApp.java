@@ -4,9 +4,12 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.NoninvertibleTransformException;
 import java.io.File;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -17,14 +20,17 @@ import javax.swing.event.ChangeListener;
 
 public class VisApp extends JPanel implements ActionListener {
 	private JFrame appFrame;
+	private JFrame selectFrame;
 	private VisPanel visPanel;
     private Matrix2DVis zoomPanel;
+    private boolean selectWindowActive = false;
     public UpdateSliderEvent updateSlider = new UpdateSliderEvent();
     JSlider zoomSlider;
     
 	public VisApp() throws NoninvertibleTransformException {
 		initialize();
 		appFrame.setVisible(true);
+		
 	}
 
 	private void initialize() throws NoninvertibleTransformException {
@@ -32,6 +38,7 @@ public class VisApp extends JPanel implements ActionListener {
 		appFrame.setTitle("Matrix Vis");
 		appFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		appFrame.setBounds(100, 100, 1000, 700);
+		
 
 		initializePanel();
 		initializeMenu();
@@ -59,7 +66,13 @@ public class VisApp extends JPanel implements ActionListener {
 		// Options menu
 		JMenu options = new JMenu("Options");
 		menuBar.add(options);
-
+		
+		JMenuItem selection = new JMenuItem("Selection Tool");
+		selection.addActionListener(this);
+		selection.setActionCommand("selection");
+		selection.setEnabled(true);
+		options.add(selection);
+		
 		// Toggle Grid
 		JMenuItem grid = new JMenuItem("Toggle Hover", KeyEvent.VK_T);
 		grid.addActionListener(this);
@@ -92,7 +105,7 @@ public class VisApp extends JPanel implements ActionListener {
 		}
 		
 		//visPanel = new VisPanel(mat);
-		zoomPanel = new Matrix2DVis(mat);
+		zoomPanel = new Matrix2DVis(mat, this);
 		zoomPanel.setSliderListener(updateSlider);
 		JPanel mainPanel = (JPanel) appFrame.getContentPane();
 		mainPanel.setLayout(new BorderLayout());
@@ -129,8 +142,12 @@ public class VisApp extends JPanel implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
-
-		if (event.getActionCommand().equals("toggle hover")) {
+		if (event.getActionCommand().equals("selection")){
+			if(!selectWindowActive){
+				createSelectWindow();
+			}
+		}
+		else if (event.getActionCommand().equals("toggle hover")) {
 			visPanel.toggleTooltip();
 		} else if (event.getActionCommand().equals("change colors")) {
 
@@ -151,4 +168,28 @@ public class VisApp extends JPanel implements ActionListener {
     public interface SliderListener {
         public void updateSlider(double newVal);
     }
+    
+    private void createSelectWindow(){
+    	//bring up selection window unless its already active.
+		selectFrame = new JFrame();
+		selectFrame.setTitle("Selection");
+		selectWindowActive = true;
+		selectFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		selectFrame.setBounds(100,100,500, 500);
+		selectFrame.setVisible(true);
+	    selectFrame.addWindowListener(new WindowAdapter() {
+	        @Override
+	        public void windowClosing(WindowEvent event) {
+	            selectExitProcedure();
+	        }
+	    });
+		selectFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+    }
+    
+    private void selectExitProcedure(){
+    	selectWindowActive = false;
+    	selectFrame.dispose();
+    }
+    
 }

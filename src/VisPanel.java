@@ -21,7 +21,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class VisPanel extends JPanel implements MouseListener, MouseMotionListener, ComponentListener {
-
+	
+	private VisApp mainApp; // so we can call functions from visApp
 	private Matrix2D wholeMatrix;
 	private int max;
 	// defines a border around the plot
@@ -58,7 +59,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	JLabel genomeLabel;
 	JLabel pfamLabel;
 
-	public VisPanel(Matrix2D mat) throws NoninvertibleTransformException {
+	public VisPanel(Matrix2D mat, VisApp mainApp) throws NoninvertibleTransformException {
 		wholeMatrix = mat;
 		selectedRows = new ArrayList<Integer>();
 		addComponentListener(this);
@@ -75,6 +76,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		drawImage();
 		repaint();
 		prevPrefSize.setSize(getWidth(), getHeight());
+		this.mainApp = mainApp;
 	}
 
 	// call when the data changes
@@ -241,7 +243,6 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 	private void highlightSelectRows(Graphics2D g2) {
 		for (int row : selectedRows) {
-			System.out.println("HERE");
 			drawHorizontalLine(g2, row);
 		}
 	}
@@ -369,7 +370,8 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-
+		if(!selectedRows.remove(Integer.valueOf(cellRow)))
+			selectedRows.add(cellRow);
 	}
 
 	@Override
@@ -395,6 +397,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	@Override
 	public void mouseExited(MouseEvent e) {
 		setCursor(Cursor.getDefaultCursor());
+		
 	}
 
 	@Override
