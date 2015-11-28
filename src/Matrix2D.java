@@ -22,6 +22,43 @@ public class Matrix2D {
 		Matrix2DReader.loadTSV(matrixTsv, matrix, pFamNames, genomeNames, matrixInfo);
 	}
 	
+	//create smaller matrix from bigger matrix
+	public Matrix2D(Matrix2D bigMatrix, ArrayList<Integer> selectedRows){
+		ArrayList<String> allPFamNames = bigMatrix.pFamNames;
+		ArrayList<String> allGenomeNames = bigMatrix.genomeNames;
+		
+		//add all the pFamNames for now.
+		for(String pFam : allPFamNames){
+			pFamNames.add(pFam);
+		}
+		
+		//add only the selectRow Names.
+		for(int i : selectedRows){
+			genomeNames.add(allGenomeNames.get(i));
+		}
+		int maxVal = -10000;
+		int minVal = 10000;
+		//add the matrix entries
+		
+		for(int row = 0; row < selectedRows.size(); row++){
+			Matrix2DEntry[] rowEntries= new Matrix2DEntry[bigMatrix.getNumCols()];
+			for(int col = 0; col < bigMatrix.getNumCols(); col++){
+				int count = bigMatrix.getPFamCount(selectedRows.get(row), col);
+				if(count > maxVal)
+					maxVal = count;
+				if(count < minVal)
+					minVal = count;
+
+				rowEntries[col] = new Matrix2DEntry(row, col, count);
+			}
+			matrix.add(rowEntries);
+		}
+		
+		//add the matrixInfo
+		matrixInfo.setInfo(minVal, maxVal, selectedRows.size(), bigMatrix.getNumCols());
+		
+	}
+	
 	public Integer getMinVal() {
 		return matrixInfo.getMinVal();
 	}

@@ -8,6 +8,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.NoninvertibleTransformException;
 import java.io.File;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -24,6 +25,7 @@ import javax.swing.event.ChangeListener;
 
 public class VisApp extends JPanel implements ActionListener {
 	private JFrame appFrame;
+	private Matrix2D wholeMatrix;
 	private JFrame selectFrame;
 	private VisPanel visPanel;
 	private SelectPanel selectPanel;
@@ -99,9 +101,9 @@ public class VisApp extends JPanel implements ActionListener {
 
 		//File f = new File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
 		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
-		Matrix2D mat = null;
+		wholeMatrix = null;
 		try {
-			mat = new Matrix2D(f);
+			wholeMatrix = new Matrix2D(f);
 			// data = new int[mat.getNumRows()][mat.getNumCols()];
 
 		} catch (Exception e) {
@@ -110,7 +112,7 @@ public class VisApp extends JPanel implements ActionListener {
 		}
 		
 		//visPanel = new VisPanel(mat);
-		zoomPanel = new Matrix2DVis(mat, this);
+		zoomPanel = new Matrix2DVis(wholeMatrix, this);
 		zoomPanel.setSliderListener(updateSlider);
 		JPanel mainPanel = (JPanel) appFrame.getContentPane();
 		mainPanel.setLayout(new BorderLayout());
@@ -220,19 +222,53 @@ public class VisApp extends JPanel implements ActionListener {
     }
     
     //called from Select Panel
-	public void select(Object[] selectedNames) {
-		Matrix2D selectedMat = visPanel.selectMatrix(selectedNames);
+	public void select(Object[] selectedNames) throws NoninvertibleTransformException {
+		ArrayList<Integer> selectedRows = zoomPanel.selectMatrix(selectedNames);
+		Matrix2D smallerMat = new Matrix2D(wholeMatrix, selectedRows);
 		//create the new window with the selected matrix
+		createSelectedMatrixFrame(smallerMat);
 	}
 	
 	//called from Select Panel
 	public void clearAll() {
-		visPanel.clearAll();
+		zoomPanel.clearAll();
 	}
 	
 	//called from Select Panel
 	public void remove(String selectedValue) {
-		visPanel.remove(selectedValue);
+		zoomPanel.remove(selectedValue);
+	}
+	
+	//called from vispanel, updates selected on select panel
+	public void rowSelected(String genomeName) {
+		if(selectWindowActive){
+			selectPanel.addSelectedItem(genomeName);
+		}
+	}
+	
+	private void createSelectedMatrixFrame(Matrix2D smallMat) throws NoninvertibleTransformException{
+		JFrame selectionMatFrame = new JFrame();
+		selectionMatFrame.setVisible(true);
+		selectionMatFrame.setTitle("Selection");
+		selectionMatFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		selectionMatFrame.setBounds(100, 100, 1000, 700);
+		
+		
+		Matrix2DVis zoomPanel1 = new Matrix2DVis(smallMat, this);
+		zoomPanel1.setSliderListener(updateSlider);
+		JPanel mainPanel = (JPanel) selectionMatFrame.getContentPane();
+		mainPanel.setLayout(new BorderLayout());
+		mainPanel.add(zoomPanel1, BorderLayout.CENTER);
+		JSlider zoomSlider1 = new JSlider();
+		zoomSlider1.setLayout(new FlowLayout(FlowLayout.TRAILING));
+		zoomSlider1.setMajorTickSpacing(5);
+		zoomSlider1.setPaintTicks(true);
+		zoomSlider1.setSize(200, 200);
+		zoomSlider1.setVisible(true);
+		zoomSlider1.addChangeListener(zoomPanel1.sliderMovement);
+		mainPanel.add(zoomSlider1, BorderLayout.PAGE_END);
+		
+		mainPanel.setVisible(true);
 	}
     
 }

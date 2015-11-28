@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.geom.NoninvertibleTransformException;
+import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
 import javax.swing.InputMap;
@@ -175,4 +176,15 @@ public class Matrix2DVis extends JScrollPane {
     public interface ZoomListener {
         public void zoomChangedEvent(double newZoom);
     }
+	public void clearAll() {
+		imagePanel.clearAll();
+	}
+
+	public void remove(String selectedValue) {
+		imagePanel.remove(selectedValue);
+	}
+
+	public ArrayList<Integer> selectMatrix(Object[] selectedNames) {	
+		return imagePanel.selectMatrix(selectedNames);
+	}
 }

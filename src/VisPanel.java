@@ -345,19 +345,25 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	}
 	
 	//called from main from selectedPanel
-	public Matrix2D selectMatrix(Object[] selectedNames) {
-		
-		//return smaller Matrix2D
-		return null;
+	public ArrayList<Integer> selectMatrix(Object[] selectedNames) {	
+		//return rows that are selected
+		return selectedRows;
 	}
 	//called from main from selectedPanel
 	public void clearAll() {
-		
+		selectedRows.clear();
+		repaint();
 	}
 	
 	//called from main from selectedPanel
-	public void remove(String nameToRemvoe) {
-		
+	public void remove(String nameToRemove) {
+		for(int i = 0; i < selectedRows.size(); i++){
+			String genomeName = wholeMatrix.getGenomeName(selectedRows.get(i));
+			if(genomeName.equals(nameToRemove)){
+				selectedRows.remove(i);
+			}
+		}
+		repaint();
 	}
 	
 	@Override
@@ -389,8 +395,12 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if(!selectedRows.remove(Integer.valueOf(cellRow)))
+		String genomeName = null;
+		if(!selectedRows.remove(Integer.valueOf(cellRow))){
 			selectedRows.add(cellRow);
+			genomeName = wholeMatrix.getGenomeName(cellRow);
+			mainApp.rowSelected(genomeName);
+		}
 	}
 
 	@Override

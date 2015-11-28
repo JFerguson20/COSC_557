@@ -9,6 +9,7 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.NoninvertibleTransformException;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -87,7 +88,11 @@ public class SelectPanel extends JPanel
 
 	public void actionPerformed(ActionEvent e) {
 		if ("select".equals(e.getActionCommand())) {
-			mainApp.select(listModel.toArray());
+			try {
+				mainApp.select(listModel.toArray());
+			} catch (NoninvertibleTransformException e1) {
+				e1.printStackTrace();
+			}
 		} else if ("clear".equals(e.getActionCommand())) {
 			mainApp.clearAll();
 			listModel.removeAllElements();
