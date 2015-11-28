@@ -8,13 +8,17 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.NoninvertibleTransformException;
 import java.io.File;
+
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -22,6 +26,7 @@ public class VisApp extends JPanel implements ActionListener {
 	private JFrame appFrame;
 	private JFrame selectFrame;
 	private VisPanel visPanel;
+	private SelectPanel selectPanel;
     private Matrix2DVis zoomPanel;
     private boolean selectWindowActive = false;
     public UpdateSliderEvent updateSlider = new UpdateSliderEvent();
@@ -173,10 +178,21 @@ public class VisApp extends JPanel implements ActionListener {
     	//bring up selection window unless its already active.
 		selectFrame = new JFrame();
 		selectFrame.setTitle("Selection");
+		//menu bar
+		JMenuBar menuBar = new JMenuBar();
+		JMenu file = new JMenu("File");
+		menuBar.add(file);
+		JMenuItem mi = new JMenuItem("Import Selections", KeyEvent.VK_I);
+		mi.addActionListener(this);
+		mi.setActionCommand("open csv");
+		mi.setEnabled(true);
+		file.add(mi);
+		selectFrame.setJMenuBar(menuBar);
+		//end menu bar
 		selectWindowActive = true;
 		selectFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		selectFrame.setBounds(100,100,500, 500);
-		selectFrame.setVisible(true);
+		
 	    selectFrame.addWindowListener(new WindowAdapter() {
 	        @Override
 	        public void windowClosing(WindowEvent event) {
@@ -185,11 +201,38 @@ public class VisApp extends JPanel implements ActionListener {
 	    });
 		selectFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
+
+		
+		//
+		selectPanel = new SelectPanel(this);
+		JPanel mainPanel = (JPanel)selectFrame.getContentPane();
+		mainPanel.setLayout(new BorderLayout());
+		mainPanel.add(selectPanel, BorderLayout.CENTER);
+		selectPanel.setLayout(null);
+        //mainPanel.add(scrollPane, BorderLayout.SOUTH);
+
+		selectFrame.setVisible(true);
     }
     
     private void selectExitProcedure(){
     	selectWindowActive = false;
     	selectFrame.dispose();
     }
+    
+    //called from Select Panel
+	public void select(Object[] selectedNames) {
+		Matrix2D selectedMat = visPanel.selectMatrix(selectedNames);
+		//create the new window with the selected matrix
+	}
+	
+	//called from Select Panel
+	public void clearAll() {
+		visPanel.clearAll();
+	}
+	
+	//called from Select Panel
+	public void remove(String selectedValue) {
+		visPanel.remove(selectedValue);
+	}
     
 }

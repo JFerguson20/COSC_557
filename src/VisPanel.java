@@ -21,7 +21,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class VisPanel extends JPanel implements MouseListener, MouseMotionListener, ComponentListener {
-	
+
 	private VisApp mainApp; // so we can call functions from visApp
 	private Matrix2D wholeMatrix;
 	private int max;
@@ -45,6 +45,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	private int cellRow = 0;
 	private int cellCol = 0;
 	
+
 	private double zoomPerc = 1.0f;
 	private double zoomWidth = 1.0f;
 	private double zoomHeight = 1.0f;
@@ -60,6 +61,8 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	JLabel pfamLabel;
 
 	public VisPanel(Matrix2D mat, VisApp mainApp) throws NoninvertibleTransformException {
+
+
 		wholeMatrix = mat;
 		selectedRows = new ArrayList<Integer>();
 		addComponentListener(this);
@@ -84,7 +87,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 		int numCols = wholeMatrix.getNumCols();
 		int numRows = wholeMatrix.getNumRows();
-
+		
 		// make image size of data with each point being a pixel
 		offscreenImage = new BufferedImage(numCols, numCols, BufferedImage.TYPE_INT_ARGB);
 		offscreenGraphics = offscreenImage.createGraphics();
@@ -178,7 +181,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		}
 		
 	}
-
+	
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
@@ -340,7 +343,23 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		genomeLabel.setText(null);
 		pfamLabel.setText(null);
 	}
-
+	
+	//called from main from selectedPanel
+	public Matrix2D selectMatrix(Object[] selectedNames) {
+		
+		//return smaller Matrix2D
+		return null;
+	}
+	//called from main from selectedPanel
+	public void clearAll() {
+		
+	}
+	
+	//called from main from selectedPanel
+	public void remove(String nameToRemvoe) {
+		
+	}
+	
 	@Override
 	public void mouseDragged(MouseEvent e) {
 	}
@@ -352,7 +371,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 		// Do the inverse transform
 		mouseScaled = null;
-		// System.out.println(mousePoint.getX());
+		//System.out.println(mousePoint.getX());
 		try {
 			mouseScaled = xform.inverseTransform(
 					new Point2D.Double(mousePoint.getX() - borderSize, mousePoint.getY() - borderSize), null);
@@ -418,5 +437,9 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	@Override
 	public void componentHidden(ComponentEvent e) {
 	}
+
+
+
+
 
 }
