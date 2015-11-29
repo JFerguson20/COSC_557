@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JMenu;
@@ -22,6 +23,8 @@ import javax.swing.JSlider;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 
 public class VisApp extends JPanel implements ActionListener {
 	private JFrame appFrame;
@@ -95,6 +98,16 @@ public class VisApp extends JPanel implements ActionListener {
 		options.add(colors);
 		
 		//appFrame.set
+		
+		// ===========
+		//the search bar added by William.. i have no idea if this is how we want to do this
+		//AutoCompleteDecorator decorator;
+		//the combobox options will need to be changed to reflect genomes
+		JComboBox combobox = new JComboBox(new Object[]{"","Ester", "Jordi","Jordina", "Jorge", "Sergi"});
+	    AutoCompleteDecorator.decorate(combobox);
+	    menuBar.add(combobox);
+	    // ===========
+	    
 	}
 
 	private void initializePanel() throws NoninvertibleTransformException {
