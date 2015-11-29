@@ -259,6 +259,10 @@ public class VisApp extends JPanel implements ActionListener {
 		}
 	}
 	
+	public ArrayList<String> getAllGenomeNames(){
+		return wholeMatrix.getAllGenomeNames();
+	}
+	
 	private void createSelectedMatrixFrame(Matrix2D smallMat) throws NoninvertibleTransformException{
 		JFrame selectionMatFrame = new JFrame();
 		selectionMatFrame.setVisible(true);

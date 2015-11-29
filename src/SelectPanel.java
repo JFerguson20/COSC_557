@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.NoninvertibleTransformException;
+import java.util.ArrayList;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -30,9 +31,10 @@ public class SelectPanel extends JPanel
 	private JButton selectBtn;
 	private JButton clearBtn;
 	private JButton removeBtn;
-
+	private ArrayList<String> allGenomeNames;
 	public SelectPanel(VisApp mainApp) {
 		this.mainApp = mainApp;
+		allGenomeNames = mainApp.getAllGenomeNames();
 		listModel = new DefaultListModel<String>();
 		// add(valLabel);
 		list = new JList<String>(listModel);
