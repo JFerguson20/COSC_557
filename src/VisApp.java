@@ -113,7 +113,9 @@ public class VisApp extends JPanel implements ActionListener {
 	private void initializePanel() throws NoninvertibleTransformException {
 
 		//File f = new File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
-		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
+//		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
+		File f = new File("./data/result/grouped_helix_turn_helix_PfamA.matrix.tsv");
+
 		wholeMatrix = null;
 		try {
 			wholeMatrix = new Matrix2D(f);
