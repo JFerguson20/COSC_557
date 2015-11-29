@@ -86,4 +86,8 @@ public class Matrix2D {
 	public String getGenomeName(int genomeRowID) {
 		return genomeNames.get(genomeRowID);
 	}
+	
+	public ArrayList<String> getAllGenomeNames(){
+		return genomeNames;
+	}
 }
