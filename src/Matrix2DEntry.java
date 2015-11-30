@@ -3,9 +3,9 @@ public class Matrix2DEntry {
 	
 	private int genomeID;
 	private int pFamID;
-	private int count;
+	private short count;
 	
-	public Matrix2DEntry(int genomeID_in, int pFamID_in, int count_in) {
+	public Matrix2DEntry(int genomeID_in, int pFamID_in, short count_in) {
 		genomeID  = genomeID_in;
 		pFamID    = pFamID_in;
 		count     = count_in;
@@ -19,7 +19,7 @@ public class Matrix2DEntry {
 		return pFamID;
 	}
 	
-	public int getPFamCount() {
+	public short getPFamCount() {
 		return count;
 	}
 }

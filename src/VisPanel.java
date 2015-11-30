@@ -26,19 +26,18 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	private Matrix2D wholeMatrix;
 	private int max;
 	// defines a border around the plot
-	private int borderSize = 10;
+	private int borderSize = 15;
 	// color of the data marks
 	private boolean showTooltip = true;
 	private boolean antialiasEnabled = true;
-	private boolean zoomApplied = false;
 	private Point mousePoint = new Point();
 	private Point2D mouseScaled = null; // index of row and col
+	
 	// for drawing the plot offscreen for better efficiency
 	private BufferedImage offscreenImage;
 	private Graphics2D offscreenGraphics;
-	// for scaling the heatmap
-	private BufferedImage resized;
-	private Graphics2D resizedG2;
+
+	//transform for inverting coordinates for the mouse
 	private AffineTransform xform;
 
 	// what we are hovering over
@@ -47,6 +46,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	
 
 	private double zoomPerc = 1.0f;
+	private double zoomPercPrev = 1.0f;
 	private double zoomWidth = 1.0f;
 	private double zoomHeight = 1.0f;
 	
@@ -89,7 +89,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		int numRows = wholeMatrix.getNumRows();
 		
 		// make image size of data with each point being a pixel
-		offscreenImage = new BufferedImage(numCols, numCols, BufferedImage.TYPE_INT_ARGB);
+		offscreenImage = new BufferedImage(numCols, numRows, BufferedImage.TYPE_INT_ARGB);
 		offscreenGraphics = offscreenImage.createGraphics();
 
 		for (int i = 0; i < numCols; i++) {
@@ -102,28 +102,19 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 				offscreenGraphics.fillRect(i, j, 1, 1);
 			}
 		}
-
-		scaleImage(false);
+		scaleImage();
 	}
 	
-	public Dimension getPreferredSize() {
-		Dimension prefSize = new Dimension();
-		prefSize.setSize(prevPrefSize.getWidth(), prevPrefSize.getHeight());
-		if(zoomApplied) {
-			prefSize.setSize(zoomWidth, zoomHeight);
-			zoomApplied = false;
-			prevPrefSize.setSize(prefSize);
-		}
-		return prefSize;
+	public double getZoomScale() {
+		return zoomPerc;
 	}
 	
 	public void applyZoom(double zoomPercentage) {
-		zoomApplied = true;
 		zoomPerc = zoomPercentage;
-		
-		scaleImage(true);
-		zoomWidth = (double)resized.getWidth() * zoomPerc;
-		zoomHeight = (double)resized.getHeight() *zoomPerc;
+		System.out.println(" zoomPercentage: " + zoomPercentage);
+		scaleImage();
+		zoomPercPrev = zoomPerc;
+		revalidate();
 		repaint();
 	}
 
@@ -144,42 +135,35 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		return heightScaled;
 	}
 	
-	// call when window size is changed.
-	private void scaleImage(boolean isZoom)  {
-		
+	private double getAspectRatio() {
 		double widthScale  = getWidthScaleFactor();
 		double heightScale = getHeightScaleFactor();
 		
-		int width = (int) ((getWidthScaleFactor() * (double)wholeMatrix.getNumCols()) + 0.5f);
-		int height = (int) ((getHeightScaleFactor() * (double)wholeMatrix.getNumRows()) + 0.5f);
+		if(widthScale < heightScale) { return heightScale; }
+		else						 { return widthScale;  }			 
+	}
+	
+	// call when window size is changed.
+	private void scaleImage()  {
 		
-		if(isZoom) {	
-			width  = (int)(((double)resized.getWidth() + 2*borderSize)  * zoomPerc);
-			if(width < getWidth()) { width = getWidth() + 2*borderSize;   }
-			height = (int)(((double)resized.getHeight() + 2*borderSize) * zoomPerc);
-			if(height < getHeight()) { height = getHeight() + 2*borderSize; }
-			
-			resizedG2.setColor(getBackground());
-			resizedG2.fillRect(0, 0, width, height);
-			//resizedG2.translate(width/2, height/2);
-			resizedG2.translate(cellCol, cellRow);
-			resizedG2.scale(zoomPerc, zoomPerc);
-			resizedG2.translate(-cellCol, -cellRow);
-			//resizedG2.translate(-width/2, -height/2);
-			resizedG2.drawImage(offscreenImage, xform, null);
-		}
-		else {		
-			if (width <= 0 || height <= 0) { width = 1; height = 1;	}
-			
-			resized = null;
-			resizedG2 = null;
-			// scale image here so we can reverse it.
-			resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-			resizedG2 = resized.createGraphics();
-			xform = AffineTransform.getScaleInstance(widthScale, heightScale);
-			resizedG2.drawImage(offscreenImage, xform, null);
-		}
+		//get the aspect ratio
+		double ratio = getAspectRatio() * zoomPerc / zoomPercPrev;
+
+		//get scaled dimensions
+		int width  = (int) (ratio * (double)wholeMatrix.getNumCols()) ;
+		int height = (int) (ratio * (double)wholeMatrix.getNumRows()) ;
 		
+		//weird but seems to be necessary
+		if (width <= 0 || height <= 0) { width = 1; height = 1;	}
+		
+		zoomWidth  = width;
+		zoomHeight = height;
+		zoomPerc = 1.0;
+		
+		//set the transform for inverting mouse points
+		xform = AffineTransform.getScaleInstance(ratio, ratio);
+		
+		this.setPreferredSize(new Dimension((int)zoomWidth + (borderSize*2), (int)zoomHeight + (borderSize*2)));
 	}
 	
 	public void paintComponent(Graphics g) {
@@ -191,14 +175,9 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		if (antialiasEnabled) {
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-			resizedG2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-			resizedG2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		}
-		g2.drawImage(resized, borderSize, borderSize, this);
-		
 
-		// g2.setColor(Color.BLACK);
-		// g2.drawLine(50, 500, 50, 50);
+		g2.drawImage(offscreenImage, borderSize, borderSize, (int)zoomWidth, (int)zoomHeight, null);
 
 		highlightSelectRows(g2);
 		// make sure mouse is on plot and showTooltip is true
@@ -283,7 +262,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 				else
 					++y;
 			}
-			bot = (int) y;
+			bot = (int) y; if(bot == top) { bot++; }
 		} catch (NoninvertibleTransformException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -328,6 +307,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 					++x;
 			}
 			right = (int) x;
+			if(right == left) { right++; }
 		} catch (NoninvertibleTransformException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -432,8 +412,9 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	@Override
 	public void componentResized(ComponentEvent e) {
 
-		scaleImage(false);
+		scaleImage();
 		repaint();
+		revalidate();
 	}
 
 	@Override

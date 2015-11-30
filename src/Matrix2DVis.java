@@ -27,6 +27,7 @@ public class Matrix2DVis extends JScrollPane {
 	double currZoomFac = 1.0f;
 	double prevZoomFac = 1.0f;
 	double zoomPerc    = 50.0f / 100.0f; //percent we zoom in or out
+	double prevSliderVal = 1.0;
 	
 	boolean zoomOut    = false;
 	boolean zoomIn     = false;
@@ -43,8 +44,7 @@ public class Matrix2DVis extends JScrollPane {
 	public VisApp.UpdateSliderEvent updateSlider;
 	
 	public Matrix2DVis(Matrix2D mat, VisApp mainApp) throws NoninvertibleTransformException {
-		imagePanel = new VisPanel(mat, mainApp); 
-		
+		imagePanel = new VisPanel(mat, mainApp); 		
 		initializeScrollPane();
 	}
 	
@@ -58,13 +58,13 @@ public class Matrix2DVis extends JScrollPane {
 	
 	private void zoomIn() {
 		
-		this.setPreferredSize(new Dimension(imagePanel.getWidth(), imagePanel.getHeight()));
-
-		imagePanel.applyZoom(currZoomFac*1.1f);
+		currZoomFac = 1.1;
+		imagePanel.applyZoom(1.1);
 		if(!updateFromSlider) {
 			sliderMovement.zoomChangedEvent(0.1f);
 		}
 		
+			
 	    Point pos = this.getViewport().getViewPosition();
 	    Point point = this.imagePanel.getMousePoint();
 	    System.out.println("x: " + point.x + "\ty: " + point.y);
@@ -76,13 +76,16 @@ public class Matrix2DVis extends JScrollPane {
 	    
 		imagePanel.revalidate();
 		imagePanel.repaint();
+		
+		revalidate();
+		repaint();
 	}
 	
 	private void zoomOut() {	
 		
-		this.setPreferredSize(new Dimension(imagePanel.getWidth(), imagePanel.getHeight()));
-		
-		imagePanel.applyZoom(currZoomFac*0.9f);
+		//this.setPreferredSize(new Dimension(imagePanel.getWidth(), imagePanel.getHeight()));
+		currZoomFac = 0.9;
+		imagePanel.applyZoom(0.9f);
 		if(!updateFromSlider) {
 			sliderMovement.zoomChangedEvent(-0.1f);
 		}
@@ -97,6 +100,9 @@ public class Matrix2DVis extends JScrollPane {
 	    
 		imagePanel.revalidate();
 		imagePanel.repaint();
+		
+		revalidate();
+		repaint();
 	}
 	
 	private void toggleKeyStrokeEvents(Boolean flag) {
@@ -150,9 +156,17 @@ public class Matrix2DVis extends JScrollPane {
     		
     		JSlider slider = (JSlider)e.getSource();
     		double currVal = (double)slider.getValue() / 100.f;
+    		
+    		System.out.println("currVal: " + currVal);
+    		System.out.println("prev Val: " + prevSliderVal);
+    		updateFromSlider = true;
+    		if(prevSliderVal < currVal) 		{ zoomIn();  }
+    		else if(prevSliderVal > currVal)	{ zoomOut(); }
+    		
+    		prevSliderVal = currVal;
+    		
     		grabFocus();
     		/*
-    		System.out.println("currVal: " + currVal);
     		if(currVal > sliderZoomVal && allowZoomIn) { 
     			zoomIn(); 
     		}
@@ -163,6 +177,7 @@ public class Matrix2DVis extends JScrollPane {
     	}
 		@Override
 		public void zoomChangedEvent(double newZoom) {
+			System.out.println("zoomChangedEvent");
 			sliderZoomVal = Math.max(0.00001, sliderZoomVal + newZoom);
     		if(sliderZoomVal > 1.0f) { allowZoomIn = false; sliderZoomVal = 1.0f;}
     		else { allowZoomIn = true; }
@@ -170,7 +185,8 @@ public class Matrix2DVis extends JScrollPane {
     		if(sliderZoomVal == 0.00001) { allowZoomOut = false; sliderZoomVal = 0.00001;}
     		else { allowZoomOut = true; }
     	
-    		updateSlider.updateSlider(sliderZoomVal);
+    		if(!updateFromSlider)
+    			updateSlider.updateSlider(sliderZoomVal);
 		}
     }
     public interface ZoomListener {

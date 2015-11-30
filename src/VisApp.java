@@ -180,7 +180,7 @@ public class VisApp extends JPanel implements ActionListener {
 	
     public class UpdateSliderEvent implements SliderListener {
 		public void  updateSlider(double newVal) {
-			System.out.println("newVal: " + newVal);
+			//System.out.println("newVal: " + newVal);
 			//zoomPanel.updateFromKeys   = false;
 			//zoomPanel.updateFromSlider = true;
 			zoomSlider.setValue((int)(newVal * 100.f));

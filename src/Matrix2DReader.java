@@ -15,7 +15,8 @@ public class Matrix2DReader {
 							   List<Matrix2DEntry[]> matrix, 
 							   ArrayList<String> pFamNames,
 							   ArrayList<String> genomeNames,
-							   Matrix2DInfo matrixInfo) throws Exception {
+							   Matrix2DInfo matrixInfo,
+							   ArrayList<Short> rowOffsets) throws Exception {
 		BufferedReader reader = new BufferedReader(new FileReader(f));
 		
 		// matrix related info to be set
@@ -34,6 +35,7 @@ public class Matrix2DReader {
 				for(int i=1; i<parts.length; i++){
 					pFamNames.add(parts[i]);
 				}
+				//numCols = parts.length - 1;
 				line_counter++;
 				line = reader.readLine();
 				continue;
@@ -41,21 +43,32 @@ public class Matrix2DReader {
 				
 			// split string on tab character for .tsv
 			String[] parts = line.split("\\t");
-			
+			/*int numNonZero = 0;
+			for(int i = 1; i < parts.length; i++ ) { 
+				if(Integer.parseInt(parts[i]) != 0) { numNonZero++; }
+			}
+			rowOffsets.add((short)(parts.length - 1 - numNonZero));
+			System.out.println("offset: " + (parts.length - 1 - numNonZero));
+			*/
 			// genome name is first entry on each row
 			genomeNames.add(parts[0]);
 			
 			// number of vals in a row is parts.length - 1 since we ignore genome name
+			//Matrix2DEntry[] rowVals = new Matrix2DEntry[numNonZero];
 			Matrix2DEntry[] rowVals = new Matrix2DEntry[parts.length - 1];
 			int genomeID = line_counter - 1;
+			int currEntry = 0;
 			try {
 				for(int pFamID=1; pFamID <parts.length; pFamID++){
-					int count = Integer.parseInt(parts[pFamID]);
-					rowVals[pFamID - 1] = new Matrix2DEntry(genomeID, pFamID - 1, count);
+					short count = (short)Integer.parseInt(parts[pFamID]);
+					//if(count != 0) {
+						//System.out.println("curr: " + currEntry + "\tactual: " + numNonZero);
+						rowVals[currEntry++] = new Matrix2DEntry(genomeID, pFamID - 1, count);
 					
-					// set min/max Vals
-					if(count < minVal) { minVal = count; }
-					if(count > maxVal) { maxVal = count; }
+						// set min/max Vals
+						if(count < minVal) { minVal = count; }
+						if(count > maxVal) { maxVal = count; }
+					//}
 				}
 			} catch (NumberFormatException ex) {
 				System.out.println("DataSet.readCSV(): NumberFormatException caught so skipping record. " + ex.fillInStackTrace());
@@ -85,8 +98,9 @@ public class Matrix2DReader {
 		ArrayList<String> genomeNames = new ArrayList<String>();
 		Matrix2DInfo matrixInfo = new Matrix2DInfo();
 		List<Matrix2DEntry[]> matrix = new ArrayList<Matrix2DEntry[]>();
+		ArrayList<Short> rowOffsets = new ArrayList<Short>();
 		
-		Matrix2DReader.loadTSV(f, matrix, pFamNames, genomeNames, matrixInfo);
+		Matrix2DReader.loadTSV(f, matrix, pFamNames, genomeNames, matrixInfo, rowOffsets);
 		
 		for(int i = 0; i < matrix.size(); i++) {
 			for(int j = 0; j < matrix.get(i).length; j++) {

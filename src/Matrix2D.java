@@ -18,8 +18,10 @@ public class Matrix2D {
 	// row headers of genome names
 	private ArrayList<String> genomeNames = new ArrayList<String>();
 	
+	private ArrayList<Short>  rowOffsets = new ArrayList<Short>();
+	
 	public Matrix2D(File matrixTsv) throws Exception {
-		Matrix2DReader.loadTSV(matrixTsv, matrix, pFamNames, genomeNames, matrixInfo);
+		Matrix2DReader.loadTSV(matrixTsv, matrix, pFamNames, genomeNames, matrixInfo, rowOffsets);
 	}
 	
 	//create smaller matrix from bigger matrix
@@ -43,7 +45,7 @@ public class Matrix2D {
 		for(int row = 0; row < selectedRows.size(); row++){
 			Matrix2DEntry[] rowEntries= new Matrix2DEntry[bigMatrix.getNumCols()];
 			for(int col = 0; col < bigMatrix.getNumCols(); col++){
-				int count = bigMatrix.getPFamCount(selectedRows.get(row), col);
+				short count = bigMatrix.getPFamCount(selectedRows.get(row), col);
 				if(count > maxVal)
 					maxVal = count;
 				if(count < minVal)
@@ -75,8 +77,12 @@ public class Matrix2D {
 		return matrixInfo.getNumCols();
 	}
 	
-	public Integer getPFamCount(int genomeRowID, int pFamColID) {
+	public Short getPFamCount(int genomeRowID, int pFamColID) {
 		return matrix.get(genomeRowID)[pFamColID].getPFamCount();
+	}
+	
+	public Matrix2DEntry[] getRow(int genomeRowID) {
+		return matrix.get(genomeRowID);
 	}
 	
 	public String getPFamName(int pFamColID) {
@@ -89,5 +95,9 @@ public class Matrix2D {
 	
 	public ArrayList<String> getAllGenomeNames(){
 		return genomeNames;
+	}
+	
+	public ArrayList<Short>  getRowOffsets() {
+		return rowOffsets;
 	}
 }
