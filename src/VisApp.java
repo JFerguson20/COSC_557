@@ -34,7 +34,6 @@ public class VisApp extends JPanel implements ActionListener {
 	private VisPanel visPanel;
 	private SelectPanel selectPanel;
     private Matrix2DVis zoomPanel;
-    private boolean selectWindowActive = false;
     public UpdateSliderEvent updateSlider = new UpdateSliderEvent();
     JSlider zoomSlider;
     
@@ -117,7 +116,7 @@ public class VisApp extends JPanel implements ActionListener {
 		//File f = new File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
 //		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
 		//File f = new File("./data/result/grouped_helix_turn_helix_PfamA.matrix.tsv");
-		File f = new File("./data/result/grouped_Metabolism_PfamA.matrix.tsv");
+		File f = new File("./data/result/grouped_enzyme_PfamA.matrix.tsv");
 
 		wholeMatrix = null;
 		try {
@@ -149,7 +148,7 @@ public class VisApp extends JPanel implements ActionListener {
 		mainPanel.setVisible(true);
 		//visPanel.setLayout(null);
 		
-		
+		createSelectWindow();
 		
 	}
 
@@ -169,9 +168,10 @@ public class VisApp extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		if (event.getActionCommand().equals("selection")){
-			if(!selectWindowActive){
-				createSelectWindow();
-			}
+			//if(!selectWindowActive){
+				//createSelectWindow();
+				selectFrame.setVisible(true);
+			//}
 		}
 		else if (event.getActionCommand().equals("toggle hover")) {
 			visPanel.toggleTooltip();
@@ -198,6 +198,7 @@ public class VisApp extends JPanel implements ActionListener {
     private void createSelectWindow(){
     	//bring up selection window unless its already active.
 		selectFrame = new JFrame();
+		//selectFrame.setVisible(false);
 		selectFrame.setTitle("Selection");
 		//menu bar
 		JMenuBar menuBar = new JMenuBar();
@@ -210,7 +211,6 @@ public class VisApp extends JPanel implements ActionListener {
 		file.add(mi);
 		selectFrame.setJMenuBar(menuBar);
 		//end menu bar
-		selectWindowActive = true;
 		selectFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		selectFrame.setBounds(100,100,500, 500);
 		
@@ -232,12 +232,11 @@ public class VisApp extends JPanel implements ActionListener {
 		selectPanel.setLayout(null);
         //mainPanel.add(scrollPane, BorderLayout.SOUTH);
 
-		selectFrame.setVisible(true);
+		selectFrame.setVisible(false);
     }
     
     private void selectExitProcedure(){
-    	selectWindowActive = false;
-    	selectFrame.dispose();
+    	selectFrame.setVisible(false);
     }
     
     //called from Select Panel
@@ -260,9 +259,7 @@ public class VisApp extends JPanel implements ActionListener {
 	
 	//called from vispanel, updates selected on select panel
 	public void rowSelected(String genomeName) {
-		if(selectWindowActive){
-			selectPanel.addSelectedItem(genomeName);
-		}
+		selectPanel.addSelectedItem(genomeName);
 	}
 	
 	public ArrayList<String> getAllGenomeNames(){
