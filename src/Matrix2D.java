@@ -30,10 +30,22 @@ public class Matrix2D {
 		ArrayList<String> allGenomeNames = bigMatrix.genomeNames;
 		
 		//add all the pFamNames for now.
-		for(String pFam : allPFamNames){
-			pFamNames.add(pFam);
+		ArrayList<Integer> cols = new ArrayList<Integer>();
+		for(int pf = 0; pf < allPFamNames.size(); pf++)
+		{
+			boolean showThisPF = false;
+			for(int sr = 0; sr < selectedRows.size(); sr++)
+			{
+				short count = bigMatrix.getPFamCount(selectedRows.get(sr), pf);
+				if(count > 0)
+					showThisPF = true;
+			}
+			if(showThisPF){
+				pFamNames.add(allPFamNames.get(pf));
+				cols.add(pf);
+			}
 		}
-		
+			
 		//add only the selectRow Names.
 		for(int i : selectedRows){
 			genomeNames.add(allGenomeNames.get(i));
@@ -43,9 +55,9 @@ public class Matrix2D {
 		//add the matrix entries
 		
 		for(int row = 0; row < selectedRows.size(); row++){
-			Matrix2DEntry[] rowEntries= new Matrix2DEntry[bigMatrix.getNumCols()];
-			for(int col = 0; col < bigMatrix.getNumCols(); col++){
-				short count = bigMatrix.getPFamCount(selectedRows.get(row), col);
+			Matrix2DEntry[] rowEntries= new Matrix2DEntry[pFamNames.size()];
+			for(int col = 0; col < pFamNames.size(); col++){
+				short count = bigMatrix.getPFamCount(selectedRows.get(row), cols.get(col));
 				if(count > maxVal)
 					maxVal = count;
 				if(count < minVal)
@@ -57,7 +69,7 @@ public class Matrix2D {
 		}
 		
 		//add the matrixInfo
-		matrixInfo.setInfo(minVal, maxVal, selectedRows.size(), bigMatrix.getNumCols());
+		matrixInfo.setInfo(minVal, maxVal, selectedRows.size(), cols.size());
 		
 	}
 	

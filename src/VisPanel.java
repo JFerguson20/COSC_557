@@ -236,7 +236,6 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 			valY = mousePoint.y + 15;
 			genomeY = mousePoint.y + 35;
 			pfamY = mousePoint.y + 55;
-			System.out.println("Top Side");
 		}
 			
 		// draw rectangle to put our values in
