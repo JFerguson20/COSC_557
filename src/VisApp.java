@@ -105,7 +105,7 @@ public class VisApp extends JPanel implements ActionListener {
 		options.add(colors);
 		
 		//appFrame.set
-		ArrayList<String> search = wholeMatrix.getAllGenomeNames();
+		ArrayList<String> search = new ArrayList<String>(wholeMatrix.getAllGenomeNames());
 		search.sort(null);
 		JComboBox<Object> combobox = new JComboBox<Object>(search.toArray());
 	    AutoCompleteDecorator.decorate(combobox);
