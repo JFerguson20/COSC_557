@@ -200,6 +200,15 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 			drawHorizontalLine(g2, cellRow);
 			drawVerticalLine(g2, cellCol);
 		}
+		else
+		{
+			valLabel.setText("");			
+			// draw genome
+			genomeLabel.setText("");			
+			// draw pfam
+			pfamLabel.setText("");
+
+		}
 			
 	}
 
@@ -208,25 +217,47 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		g2.setColor(Color.BLACK);
 		Font labelFont = valLabel.getFont();
 		
+		int x = mousePoint.x + 15;
+		
+		int rectY = mousePoint.y - 75;
+		int valY = mousePoint.y - 75;
+		int genomeY = mousePoint.y - 55;
+		int pfamY = mousePoint.y - 35;
+		
+		//if on right side
+		if(mousePoint.x + 120 > getWidth())
+		{
+			x = mousePoint.x - 115;
+		}
+		//if on top side
+		if(mousePoint.y - 80 < 0) 
+		{
+			rectY = mousePoint.y + 15;
+			valY = mousePoint.y + 15;
+			genomeY = mousePoint.y + 35;
+			pfamY = mousePoint.y + 55;
+		}
+			
 		// draw rectangle to put our values in
-		g2.drawRect(mousePoint.x + 15, mousePoint.y - 75, 100, 55);
+		g2.drawRect(x, rectY, 100, 55);
 		g2.setColor(new Color(100, 100, 100, 50));
-		g2.fillRect(mousePoint.x + 15, mousePoint.y - 75, 100, 55);
+		g2.fillRect(x, rectY, 100, 55);
 		
 		// draw value
 		valLabel.setText("Count: " + Integer.toString(wholeMatrix.getPFamCount(cellRow, cellCol)));
 		valLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
-		valLabel.setBounds(mousePoint.x + 15, mousePoint.y - 75, 75, 15);
+		valLabel.setBounds(x, valY, 75, 15);
 		
 		// draw genome
 		genomeLabel.setText(wholeMatrix.getGenomeName(cellRow));
 		genomeLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
-		genomeLabel.setBounds(mousePoint.x + 15, mousePoint.y - 55, 100, 15);
+		genomeLabel.setBounds(x, genomeY, 100, 15);
 		
 		// draw pfam
 		pfamLabel.setText(wholeMatrix.getPFamName(cellCol));
 		pfamLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
-		pfamLabel.setBounds(mousePoint.x + 15, mousePoint.y - 35, 75, 15);
+		pfamLabel.setBounds(x, pfamY, 75, 15);
+
 	}
 	
 	public Point getMousePoint() {
