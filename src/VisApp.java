@@ -13,11 +13,13 @@ import java.util.ArrayList;
 import javax.swing.ComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -55,8 +57,6 @@ public class VisApp extends JPanel implements ActionListener {
 		appFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		appFrame.setBounds(100, 100, 1000, 700);
 		
-
-		initializePanel();
 		initializeMenu();
 	}
 
@@ -66,9 +66,9 @@ public class VisApp extends JPanel implements ActionListener {
 
 		JMenu file = new JMenu("File");
 		menuBar.add(file);
-		JMenuItem mi = new JMenuItem("Open CSV...", KeyEvent.VK_O);
+		JMenuItem mi = new JMenuItem("Open TSV...", KeyEvent.VK_O);
 		mi.addActionListener(this);
-		mi.setActionCommand("open csv");
+		mi.setActionCommand("open tsv");
 		mi.setEnabled(true);
 		file.add(mi);
 
@@ -102,21 +102,9 @@ public class VisApp extends JPanel implements ActionListener {
 		colors.setActionCommand("change colors");
 		colors.setEnabled(false);
 		options.add(colors);
-		
-		//appFrame.set
-		ArrayList<String> search = new ArrayList<String>(wholeMatrix.getAllGenomeNames());
-		search.sort(null);
-		JComboBox<Object> combobox = new JComboBox<Object>(search.toArray());
-	    AutoCompleteDecorator.decorate(combobox);
-	    menuBar.add(combobox);
 	}
 
-	private void initializePanel() throws NoninvertibleTransformException {
-
-		//File f = new File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
-//		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
-		//File f = new File("./data/result/grouped_helix_turn_helix_PfamA.matrix.tsv");
-		File f = new File("./data/result/grouped_enzyme_PfamA.matrix.tsv");
+	private void initializePanel(File f) throws NoninvertibleTransformException {
 
 		wholeMatrix = null;
 		try {
@@ -149,9 +137,17 @@ public class VisApp extends JPanel implements ActionListener {
 		//visPanel.setLayout(null);
 		
 		createSelectWindow();
+		initializeSearchBox();
 		
 	}
 
+	public void initializeSearchBox() {
+		ArrayList<String> search = new ArrayList<String>(wholeMatrix.getAllGenomeNames());
+		search.sort(null);
+		JComboBox<Object> combobox = new JComboBox<Object>(search.toArray());
+	    AutoCompleteDecorator.decorate(combobox);
+	    appFrame.getJMenuBar().add(combobox);
+	}
 	public static void main(String args[]) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -168,10 +164,7 @@ public class VisApp extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		if (event.getActionCommand().equals("selection")){
-			//if(!selectWindowActive){
-				//createSelectWindow();
-				selectFrame.setVisible(true);
-			//}
+			selectFrame.setVisible(true);
 		}
 		else if (event.getActionCommand().equals("toggle hover")) {
 			visPanel.toggleTooltip();
@@ -180,13 +173,36 @@ public class VisApp extends JPanel implements ActionListener {
 		} else if (event.getActionCommand().equals("exit")) {
 			System.exit(0);
 		}
+		else if(event.getActionCommand().equals("open tsv")) {
+			
+			 //Create a file chooser
+			 final JFileChooser tsvFileChooser = new JFileChooser();
+			 int result = tsvFileChooser.showOpenDialog(appFrame);
+			
+			 if (result != JFileChooser.APPROVE_OPTION) {
+		 		 JOptionPane.showMessageDialog(appFrame, "Not a valid file. Please try again.");
+				 return;
+			 }
+				
+		     // user selects a file
+			 File tsvFile = tsvFileChooser.getSelectedFile();			 
+			 if(!tsvFile.getAbsolutePath().endsWith(".tsv")) {
+				 JOptionPane.showMessageDialog(appFrame, "Not a valid .tsv file. Please try again.");
+			 }
+			 else {
+				 try {
+					initializePanel(tsvFile);
+					appFrame.revalidate();
+				} catch (NoninvertibleTransformException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			 }
+		}
 	}
 	
     public class UpdateSliderEvent implements SliderListener {
 		public void  updateSlider(double newVal) {
-			//System.out.println("newVal: " + newVal);
-			//zoomPanel.updateFromKeys   = false;
-			//zoomPanel.updateFromSlider = true;
 			zoomSlider.setValue((int)(newVal * 100.f));
 		}
     }
