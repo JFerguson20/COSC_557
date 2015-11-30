@@ -24,7 +24,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 	private VisApp mainApp; // so we can call functions from visApp
 	private Matrix2D wholeMatrix;
-	private int max;
+
 	// defines a border around the plot
 	private int borderSize = 15;
 	// color of the data marks
@@ -62,23 +62,29 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 	public VisPanel(Matrix2D mat, VisApp mainApp) throws NoninvertibleTransformException {
 
-
+		//intialize big matrix and array for smaller matrices
 		wholeMatrix = mat;
 		selectedRows = new ArrayList<Integer>();
+		
+		//init listeners
 		addComponentListener(this);
 		addMouseListener(this);
 		addMouseMotionListener(this);
-		max = mat.getMaxVal();
-		mat.getMinVal();
+		
+		//create labels for visualization
 		valLabel = new JLabel();
 		genomeLabel = new JLabel();
 		pfamLabel = new JLabel();
+		
+		//add labels
 		add(valLabel);
 		add(genomeLabel);
 		add(pfamLabel);
+		
 		drawImage();
 		repaint();
-		prevPrefSize.setSize(getWidth(), getHeight());
+		
+		//init link back to main app
 		this.mainApp = mainApp;
 	}
 
@@ -87,6 +93,8 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 		int numCols = wholeMatrix.getNumCols();
 		int numRows = wholeMatrix.getNumRows();
+		
+		int max = wholeMatrix.getMaxVal();
 		
 		// make image size of data with each point being a pixel
 		offscreenImage = new BufferedImage(numCols, numRows, BufferedImage.TYPE_INT_ARGB);
@@ -111,11 +119,8 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	
 	public void applyZoom(double zoomPercentage) {
 		zoomPerc = zoomPercentage;
-		System.out.println(" zoomPercentage: " + zoomPercentage);
 		scaleImage();
-		zoomPercPrev = zoomPerc;
-		revalidate();
-		repaint();
+		zoomPercPrev = zoomPercentage;
 	}
 
 	private double getWidthScaleFactor() {
@@ -139,15 +144,24 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		double widthScale  = getWidthScaleFactor();
 		double heightScale = getHeightScaleFactor();
 		
-		if(widthScale < heightScale) { return heightScale; }
-		else						 { return widthScale;  }			 
+		int numCols = wholeMatrix.getNumCols();
+		int numRows = wholeMatrix.getNumRows();
+		
+		if(numRows < 10) {
+			if(numRows > numCols) { return widthScale; }
+			else				  { return heightScale;  }
+		}
+		else {
+			if(widthScale < heightScale) { return heightScale; }
+			else						 { return widthScale;  }			
+		}
 	}
 	
 	// call when window size is changed.
 	private void scaleImage()  {
 		
 		//get the aspect ratio
-		double ratio = getAspectRatio() * zoomPerc / zoomPercPrev;
+		double ratio = getAspectRatio() * zoomPerc;
 
 		//get scaled dimensions
 		int width  = (int) (ratio * (double)wholeMatrix.getNumCols()) ;
@@ -155,14 +169,13 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		
 		//weird but seems to be necessary
 		if (width <= 0 || height <= 0) { width = 1; height = 1;	}
-		
 		zoomWidth  = width;
 		zoomHeight = height;
 		zoomPerc = 1.0;
 		
 		//set the transform for inverting mouse points
 		xform = AffineTransform.getScaleInstance(ratio, ratio);
-		
+
 		this.setPreferredSize(new Dimension((int)zoomWidth + (borderSize*2), (int)zoomHeight + (borderSize*2)));
 	}
 	
@@ -194,18 +207,22 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	private void drawLabels(Graphics2D g2) {
 		g2.setColor(Color.BLACK);
 		Font labelFont = valLabel.getFont();
+		
 		// draw rectangle to put our values in
 		g2.drawRect(mousePoint.x + 15, mousePoint.y - 75, 100, 55);
 		g2.setColor(new Color(100, 100, 100, 50));
 		g2.fillRect(mousePoint.x + 15, mousePoint.y - 75, 100, 55);
+		
 		// draw value
 		valLabel.setText("Count: " + Integer.toString(wholeMatrix.getPFamCount(cellRow, cellCol)));
 		valLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
 		valLabel.setBounds(mousePoint.x + 15, mousePoint.y - 75, 75, 15);
+		
 		// draw genome
 		genomeLabel.setText(wholeMatrix.getGenomeName(cellRow));
 		genomeLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
 		genomeLabel.setBounds(mousePoint.x + 15, mousePoint.y - 55, 100, 15);
+		
 		// draw pfam
 		pfamLabel.setText(wholeMatrix.getPFamName(cellCol));
 		pfamLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 15));
@@ -220,6 +237,7 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 	public void setMousePoint(int x, int y) {
 		cellCol = x;
 		cellRow = y;
+		revalidate();
 		repaint();
 	}
 
@@ -411,7 +429,6 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-
 		scaleImage();
 		repaint();
 		revalidate();

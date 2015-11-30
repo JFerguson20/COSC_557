@@ -22,12 +22,9 @@ public class Matrix2DVis extends JScrollPane {
 	private VisPanel imagePanel;
 	
 	// internal zoom values
-	double maxZoomFac  = 4.0f;
-	double minZoomFac  = 1.0f / maxZoomFac;
-	double currZoomFac = 1.0f;
-	double prevZoomFac = 1.0f;
-	double zoomPerc    = 50.0f / 100.0f; //percent we zoom in or out
-	double prevSliderVal = 1.0;
+
+	double currZoomInFac  = 1.1f;
+	double currZoomOutFac = 0.9f;
 	
 	boolean zoomOut    = false;
 	boolean zoomIn     = false;
@@ -38,7 +35,12 @@ public class Matrix2DVis extends JScrollPane {
 	public boolean updateFromSlider = false;
 	public boolean updateFromKeys   = false;
 	
-	double sliderZoomVal = 0.5f;
+	//slider specific variable
+	double sliderZoomVal = 0.0;
+	double prevSliderVal = 0.0;	
+	double sliderIncrement = 0.1;
+	double minSliderVal	   = 0.0;
+	double maxSliderVal	   = 2.0;
 	
 	public ZoomSliderEvent sliderMovement    = new ZoomSliderEvent();
 	public VisApp.UpdateSliderEvent updateSlider;
@@ -58,19 +60,17 @@ public class Matrix2DVis extends JScrollPane {
 	
 	private void zoomIn() {
 		
-		currZoomFac = 1.1;
-		imagePanel.applyZoom(1.1);
-		if(!updateFromSlider) {
-			sliderMovement.zoomChangedEvent(0.1f);
-		}
+		if(!allowZoomIn) { return; }
 		
-			
+		imagePanel.applyZoom(currZoomInFac);
+		
+		sliderMovement.zoomChangedEvent(sliderIncrement);
+		
 	    Point pos = this.getViewport().getViewPosition();
 	    Point point = this.imagePanel.getMousePoint();
-	    System.out.println("x: " + point.x + "\ty: " + point.y);
 
-	    int newX = (int)(point.x*(1.1f - 1f) + 1.1f*pos.x);
-	    int newY = (int)(point.y*(1.1f - 1f) + 1.1f*pos.y);
+	    int newX = (int)(point.x*(currZoomInFac - 1f) + currZoomInFac*pos.x);
+	    int newY = (int)(point.y*(currZoomInFac - 1f) + currZoomInFac*pos.y);
 	    this.getViewport().setViewPosition(new Point(newX, newY));
 	    this.imagePanel.setMousePoint(newX, newY);
 	    
@@ -83,18 +83,16 @@ public class Matrix2DVis extends JScrollPane {
 	
 	private void zoomOut() {	
 		
-		//this.setPreferredSize(new Dimension(imagePanel.getWidth(), imagePanel.getHeight()));
-		currZoomFac = 0.9;
-		imagePanel.applyZoom(0.9f);
-		if(!updateFromSlider) {
-			sliderMovement.zoomChangedEvent(-0.1f);
-		}
+		if(!allowZoomOut) { return; }
+		
+		imagePanel.applyZoom(currZoomOutFac);
+		sliderMovement.zoomChangedEvent(-sliderIncrement);
 		
 		Point pos = this.getViewport().getViewPosition();
 		Point point = this.imagePanel.getMousePoint();	    
 
-	    int newX = (int)(point.x*(0.9f - 1f) + 0.9f*pos.x);
-	    int newY = (int)(point.y*(0.9f - 1f) + 0.9f*pos.y);
+	    int newX = (int)(point.x*(currZoomOutFac - 1f) + currZoomOutFac*pos.x);
+	    int newY = (int)(point.y*(currZoomOutFac - 1f) + currZoomOutFac*pos.y);
 	    this.getViewport().setViewPosition(new Point(newX, newY));
 	    this.imagePanel.setMousePoint(newX, newY);
 	    
@@ -127,22 +125,18 @@ public class Matrix2DVis extends JScrollPane {
 
 			public void actionPerformed(ActionEvent e) {
 				allowZoomOut = true;
-				if(allowZoomIn) {
-					updateFromSlider = false;
-					updateFromKeys   = true;
-					zoomIn();
-				}
+				updateFromSlider = false;
+				updateFromKeys   = true;
+				zoomIn();
             }
         });
 		this.getActionMap().put("zoom out", new AbstractAction() {
 			private static final long serialVersionUID = 1L;
 			public void actionPerformed(ActionEvent e) {
 				allowZoomIn = true;
-				if(allowZoomOut) {
-					updateFromSlider = false;
-					updateFromKeys   = true;
-					zoomOut();
-				}
+				updateFromSlider = false;
+				updateFromKeys   = true;
+				zoomOut();
             }
         });
 	}
@@ -152,39 +146,43 @@ public class Matrix2DVis extends JScrollPane {
 	}
     public class ZoomSliderEvent implements ChangeListener, ZoomListener {
     	public void stateChanged(ChangeEvent e) {
-    		//if(updateFromKeys) { return; }
     		
     		JSlider slider = (JSlider)e.getSource();
     		double currVal = (double)slider.getValue() / 100.f;
     		
-    		System.out.println("currVal: " + currVal);
-    		System.out.println("prev Val: " + prevSliderVal);
+    		//indicate that we are getting an update from slider movement itself
     		updateFromSlider = true;
-    		if(prevSliderVal < currVal) 		{ zoomIn();  }
-    		else if(prevSliderVal > currVal)	{ zoomOut(); }
     		
-    		prevSliderVal = currVal;
+    		double amntChanged = Math.abs(currVal - prevSliderVal);
+    		boolean doZoom = (amntChanged > sliderIncrement);
     		
+    		//check if we need to zoom in or out
+    		if(doZoom) {
+    			if( (prevSliderVal < currVal)) 		{ zoomIn();  }
+    			else if( (prevSliderVal > currVal))	{ zoomOut(); }
+ 
+    			prevSliderVal = currVal;
+    			sliderZoomVal = currVal;
+    		}
+    		
+    		//set focus back to ctrl+ and ctrl- still work for zooming
     		grabFocus();
-    		/*
-    		if(currVal > sliderZoomVal && allowZoomIn) { 
-    			zoomIn(); 
-    		}
-    		else if(allowZoomOut) { 
-    			zoomOut(); 
-    		}
-    		*/
     	}
-		@Override
+
+    	//this functions updates the slider when ctrl+ or ctrl- is pressed
 		public void zoomChangedEvent(double newZoom) {
-			System.out.println("zoomChangedEvent");
-			sliderZoomVal = Math.max(0.00001, sliderZoomVal + newZoom);
-    		if(sliderZoomVal > 1.0f) { allowZoomIn = false; sliderZoomVal = 1.0f;}
+			//if(!updateFromSlider)
+				sliderZoomVal =  sliderZoomVal + newZoom;
+			
+			//make sure we have a valid zoom
+    		if(sliderZoomVal > maxSliderVal) { allowZoomIn = false; sliderZoomVal = maxSliderVal;}
     		else { allowZoomIn = true; }
     		
-    		if(sliderZoomVal == 0.00001) { allowZoomOut = false; sliderZoomVal = 0.00001;}
+    		//make sure we have a valid zoom
+    		if(sliderZoomVal < minSliderVal) { allowZoomOut = false; sliderZoomVal = minSliderVal;}
     		else { allowZoomOut = true; }
     	
+    		//we don't want to continually update the slider if the slider sent this update here
     		if(!updateFromSlider)
     			updateSlider.updateSlider(sliderZoomVal);
 		}

@@ -37,6 +37,12 @@ public class VisApp extends JPanel implements ActionListener {
     public UpdateSliderEvent updateSlider = new UpdateSliderEvent();
     JSlider zoomSlider;
     
+    private int minSliderVal     = 0;
+    private int maxSliderVal     = 200;
+    private int sliderTickIncr   = 20;
+    private int initialSliderVal = minSliderVal;
+    
+    
 	public VisApp() throws NoninvertibleTransformException {
 		initialize();
 		appFrame.setVisible(true);
@@ -114,7 +120,8 @@ public class VisApp extends JPanel implements ActionListener {
 
 		//File f = new File("./data/result/translated_Metabolism_PfamA.matrix.tsv");
 //		File f = new File("./data/result/translated_helix_turn_helix_PfamA.matrix.tsv");
-		File f = new File("./data/result/grouped_helix_turn_helix_PfamA.matrix.tsv");
+		//File f = new File("./data/result/grouped_helix_turn_helix_PfamA.matrix.tsv");
+		File f = new File("./data/result/grouped_Metabolism_PfamA.matrix.tsv");
 
 		wholeMatrix = null;
 		try {
@@ -133,9 +140,10 @@ public class VisApp extends JPanel implements ActionListener {
 		mainPanel.setLayout(new BorderLayout());
 		mainPanel.add(zoomPanel, BorderLayout.CENTER);
 		
-		zoomSlider = new JSlider();
+		zoomSlider = new JSlider(minSliderVal, maxSliderVal);
 		zoomSlider.setLayout(new FlowLayout(FlowLayout.TRAILING));
-		zoomSlider.setMajorTickSpacing(5);
+		zoomSlider.setMajorTickSpacing(sliderTickIncr);
+		zoomSlider.setValue(initialSliderVal);
 		zoomSlider.setPaintTicks(true);
 		zoomSlider.setSize(200, 200);
 		zoomSlider.setVisible(true);
@@ -278,9 +286,10 @@ public class VisApp extends JPanel implements ActionListener {
 		JPanel mainPanel = (JPanel) selectionMatFrame.getContentPane();
 		mainPanel.setLayout(new BorderLayout());
 		mainPanel.add(zoomPanel1, BorderLayout.CENTER);
-		JSlider zoomSlider1 = new JSlider();
+		JSlider zoomSlider1 = new JSlider(minSliderVal, maxSliderVal);
 		zoomSlider1.setLayout(new FlowLayout(FlowLayout.TRAILING));
-		zoomSlider1.setMajorTickSpacing(5);
+		zoomSlider1.setValue(initialSliderVal);
+		zoomSlider1.setMajorTickSpacing(sliderTickIncr);
 		zoomSlider1.setPaintTicks(true);
 		zoomSlider1.setSize(200, 200);
 		zoomSlider1.setVisible(true);
