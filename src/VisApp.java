@@ -10,6 +10,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.io.File;
 import java.util.ArrayList;
 
+import javax.swing.ComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -109,10 +110,10 @@ public class VisApp extends JPanel implements ActionListener {
 		//the search bar added by William.. i have no idea if this is how we want to do this
 		//AutoCompleteDecorator decorator;
 		//the combobox options will need to be changed to reflect genomes
-		JComboBox combobox = new JComboBox(new Object[]{"","Ester", "Jordi","Jordina", "Jorge", "Sergi"});
+		JComboBox combobox = new JComboBox(wholeMatrix.getAllGenomeNames().toArray());
 	    AutoCompleteDecorator.decorate(combobox);
 	    menuBar.add(combobox);
-	    // ===========
+		// ===========
 	    
 	}
 
