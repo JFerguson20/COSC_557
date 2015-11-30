@@ -63,14 +63,17 @@ public class SelectPanel extends JPanel
 
 		// paint scrollPane
 		// 50% down to 10% down
-		int top = height / 2;
-		int bot = top - (height / 10);
+		int top = (int)(height * .1) + 10;
+		System.out.println(top);
+		
+		int bot = (int)(height * .8) - 10;
+		System.out.println(bot);
 		scrollPane.setBounds(5, top, width - 10, bot);
 
 		// position buttons
 		// clear and remove on top of the scrollPane
-		clearBtn.setBounds(5, (int) (height * .4) + 5, (width / 2) - 10, (int) (height * .1) - 10);
-		removeBtn.setBounds(width / 2 + 5, (int) (height * .4) + 5, (width / 2) - 10, (int) (height * .1) - 10);
+		clearBtn.setBounds(5, 5, (width / 2) - 10, (int) (height * .1) - 10);
+		removeBtn.setBounds(width / 2 + 5, 5, (width / 2) - 10, (int) (height * .1) - 10);
 		// select on the whole bottom
 		selectBtn.setBounds(5, (int) (height * .9) + 5, width - 10, height - (int) (height * .9) - 10);
 
