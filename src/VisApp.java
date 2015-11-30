@@ -105,16 +105,11 @@ public class VisApp extends JPanel implements ActionListener {
 		options.add(colors);
 		
 		//appFrame.set
-		
-		// ===========
-		//the search bar added by William.. i have no idea if this is how we want to do this
-		//AutoCompleteDecorator decorator;
-		//the combobox options will need to be changed to reflect genomes
-		JComboBox combobox = new JComboBox(wholeMatrix.getAllGenomeNames().toArray());
+		ArrayList<String> search = wholeMatrix.getAllGenomeNames();
+		search.sort(null);
+		JComboBox<Object> combobox = new JComboBox<Object>(search.toArray());
 	    AutoCompleteDecorator.decorate(combobox);
 	    menuBar.add(combobox);
-		// ===========
-	    
 	}
 
 	private void initializePanel() throws NoninvertibleTransformException {
