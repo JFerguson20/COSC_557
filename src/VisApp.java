@@ -91,7 +91,7 @@ public class VisApp extends JPanel implements ActionListener {
 		JMenuItem grid = new JMenuItem("Toggle Hover", KeyEvent.VK_T);
 		grid.addActionListener(this);
 		grid.setActionCommand("toggle hover");
-		grid.setEnabled(true);
+		grid.setEnabled(false);
 		options.add(grid);
 
 		// Change colors
