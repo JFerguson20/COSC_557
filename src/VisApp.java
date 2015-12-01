@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -36,6 +37,7 @@ public class VisApp extends JPanel implements ActionListener {
 	private VisPanel visPanel;
 	private SelectPanel selectPanel;
     private Matrix2DVis zoomPanel;
+    private JComboBox<Object> combobox;
     public UpdateSliderEvent updateSlider = new UpdateSliderEvent();
     JSlider zoomSlider;
     
@@ -61,6 +63,7 @@ public class VisApp extends JPanel implements ActionListener {
 	}
 
 	private void initializeMenu() {
+		appFrame.revalidate();
 		JMenuBar menuBar = new JMenuBar();
 		appFrame.setJMenuBar(menuBar);
 
@@ -102,10 +105,14 @@ public class VisApp extends JPanel implements ActionListener {
 		colors.setActionCommand("change colors");
 		colors.setEnabled(false);
 		options.add(colors);
+		
+		//add empty combo box that we populate later
+		combobox = new JComboBox<Object>();
+		appFrame.getJMenuBar().add(combobox);
+		combobox.setVisible(false);
 	}
 
 	private void initializePanel(File f) throws NoninvertibleTransformException {
-
 		wholeMatrix = null;
 		try {
 			wholeMatrix = new Matrix2D(f);
@@ -120,6 +127,7 @@ public class VisApp extends JPanel implements ActionListener {
 		zoomPanel = new Matrix2DVis(wholeMatrix, this);
 		zoomPanel.setSliderListener(updateSlider);
 		JPanel mainPanel = (JPanel) appFrame.getContentPane();
+		mainPanel.removeAll();
 		mainPanel.setLayout(new BorderLayout());
 		mainPanel.add(zoomPanel, BorderLayout.CENTER);
 		
@@ -134,7 +142,6 @@ public class VisApp extends JPanel implements ActionListener {
 		mainPanel.add(zoomSlider, BorderLayout.PAGE_END);
 		
 		mainPanel.setVisible(true);
-		//visPanel.setLayout(null);
 		
 		createSelectWindow();
 		initializeSearchBox();
@@ -142,11 +149,15 @@ public class VisApp extends JPanel implements ActionListener {
 	}
 
 	public void initializeSearchBox() {
+		combobox.removeAllItems();
 		ArrayList<String> search = new ArrayList<String>(wholeMatrix.getAllGenomeNames());
 		search.sort(null);
-		JComboBox<Object> combobox = new JComboBox<Object>(search.toArray());
+		DefaultComboBoxModel genomeNames = new DefaultComboBoxModel( search.toArray() );
+		combobox.setModel(genomeNames);
 	    AutoCompleteDecorator.decorate(combobox);
-	    appFrame.getJMenuBar().add(combobox);
+	    combobox.setVisible(true);
+	    combobox.revalidate();
+	    combobox.repaint();
 	}
 	public static void main(String args[]) {
 		EventQueue.invokeLater(new Runnable() {
@@ -237,10 +248,7 @@ public class VisApp extends JPanel implements ActionListener {
 	        }
 	    });
 		selectFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		
-
-		
-		//
+	
 		selectPanel = new SelectPanel(this);
 		JPanel mainPanel = (JPanel)selectFrame.getContentPane();
 		mainPanel.setLayout(new BorderLayout());
