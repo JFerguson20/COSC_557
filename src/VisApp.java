@@ -3,6 +3,7 @@ import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -10,23 +11,16 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.io.File;
 import java.util.ArrayList;
 
-import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.ListSelectionModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 
@@ -109,7 +103,25 @@ public class VisApp extends JPanel implements ActionListener {
 		//add empty combo box that we populate later
 		combobox = new JComboBox<Object>();
 		appFrame.getJMenuBar().add(combobox);
+		//combobox.addActionListener(this);
+		//combobox.setActionCommand("search input");
 		combobox.setVisible(false);
+	    combobox.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() 
+	    {
+	        public void keyPressed(KeyEvent evt)
+	        {
+	            if(evt.getKeyCode() == KeyEvent.VK_ENTER)
+	            {
+	    			String genome = combobox.getSelectedItem().toString();
+	    			int idx = wholeMatrix.getAllGenomeNames().indexOf(genome);
+	    			zoomPanel.add(idx);
+	    			zoomPanel.revalidate();
+	    			zoomPanel.repaint();
+	    			appFrame.revalidate();
+	    			appFrame.repaint();
+	            }
+	        }
+	    });
 	}
 
 	private void initializePanel(File f) throws NoninvertibleTransformException {
@@ -156,6 +168,7 @@ public class VisApp extends JPanel implements ActionListener {
 		combobox.setModel(genomeNames);
 	    AutoCompleteDecorator.decorate(combobox);
 	    combobox.setVisible(true);
+	    combobox.setEnabled(true);
 	    combobox.revalidate();
 	    combobox.repaint();
 	}
@@ -183,6 +196,11 @@ public class VisApp extends JPanel implements ActionListener {
 
 		} else if (event.getActionCommand().equals("exit")) {
 			System.exit(0);
+		} else if (event.getActionCommand().equals("search input")) {
+			String genome = combobox.getSelectedItem().toString();
+			int idx = wholeMatrix.getAllGenomeNames().indexOf(genome);
+			zoomPanel.add(idx);
+			appFrame.revalidate();
 		}
 		else if(event.getActionCommand().equals("open tsv")) {
 			

@@ -197,6 +197,10 @@ public class Matrix2DVis extends JScrollPane {
 	public void remove(String selectedValue) {
 		imagePanel.remove(selectedValue);
 	}
+	
+	public void add(int idx) {
+		imagePanel.add(idx);
+	}
 
 	public ArrayList<Integer> selectMatrix(Object[] selectedNames) {	
 		return imagePanel.selectMatrix(selectedNames);

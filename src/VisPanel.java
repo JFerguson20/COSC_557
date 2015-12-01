@@ -422,6 +422,14 @@ public class VisPanel extends JPanel implements MouseListener, MouseMotionListen
 		repaint();
 	}
 
+	public void add(int idx) {
+		String genomeName = null;
+		if(!selectedRows.remove(Integer.valueOf(idx))){
+			selectedRows.add(idx);
+			genomeName = wholeMatrix.getGenomeName(idx);
+			mainApp.rowSelected(genomeName);
+		}
+	}
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		String genomeName = null;
