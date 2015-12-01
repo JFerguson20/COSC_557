@@ -75,6 +75,10 @@ public class SelectPanel extends JPanel
 		selectBtn.setBounds(5, (int) (height * .9) + 5, width - 10, height - (int) (height * .9) - 10);
 
 	}
+	
+	public boolean hasItem(String name) {
+		return listModel.contains(name);
+	}
 
 	public void addSelectedItem(String name) {
 		listModel.addElement(name);
@@ -82,6 +86,8 @@ public class SelectPanel extends JPanel
 
 	public void removeItem(String name) {
 		listModel.removeElement(name);
+		revalidate();
+		repaint();
 	}
 
 	public void clearSelectedItems() {
@@ -91,6 +97,7 @@ public class SelectPanel extends JPanel
 	public void actionPerformed(ActionEvent e) {
 		if ("select".equals(e.getActionCommand())) {
 			try {
+				if(listModel.toArray().length < 1) { return; }
 				mainApp.select(listModel.toArray());
 			} catch (NoninvertibleTransformException e1) {
 				e1.printStackTrace();
@@ -118,8 +125,8 @@ public class SelectPanel extends JPanel
 
 	@Override
 	public void componentResized(ComponentEvent arg0) {
-		System.out.println(getWidth());
-		System.out.println(getHeight());
+		//System.out.println(getWidth());
+		//System.out.println(getHeight());
 
 	}
 

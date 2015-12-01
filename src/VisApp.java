@@ -32,6 +32,7 @@ public class VisApp extends JPanel implements ActionListener {
 	private SelectPanel selectPanel;
     private Matrix2DVis zoomPanel;
     private JComboBox<Object> combobox;
+    JMenuItem selection;
     public UpdateSliderEvent updateSlider = new UpdateSliderEvent();
     JSlider zoomSlider;
     
@@ -80,10 +81,10 @@ public class VisApp extends JPanel implements ActionListener {
 		JMenu options = new JMenu("Options");
 		menuBar.add(options);
 		
-		JMenuItem selection = new JMenuItem("Selection Tool");
+		selection = new JMenuItem("Selection Tool");
 		selection.addActionListener(this);
 		selection.setActionCommand("selection");
-		selection.setEnabled(true);
+		selection.setEnabled(false);
 		options.add(selection);
 		
 		// Toggle Grid
@@ -114,7 +115,7 @@ public class VisApp extends JPanel implements ActionListener {
 	            {
 	    			String genome = combobox.getSelectedItem().toString();
 	    			int idx = wholeMatrix.getAllGenomeNames().indexOf(genome);
-	    			zoomPanel.add(idx);
+	    			if(!zoomPanel.add(idx)) { selectPanel.removeItem(genome); }
 	    			zoomPanel.revalidate();
 	    			zoomPanel.repaint();
 	    			appFrame.revalidate();
@@ -241,6 +242,7 @@ public class VisApp extends JPanel implements ActionListener {
     }
     
     private void createSelectWindow(){
+    	selection.setEnabled(true);
     	//bring up selection window unless its already active.
 		selectFrame = new JFrame();
 		//selectFrame.setVisible(false);
@@ -260,7 +262,6 @@ public class VisApp extends JPanel implements ActionListener {
 		selectFrame.setBounds(100,100,500, 500);
 		
 	    selectFrame.addWindowListener(new WindowAdapter() {
-	        @Override
 	        public void windowClosing(WindowEvent event) {
 	            selectExitProcedure();
 	        }
@@ -304,6 +305,11 @@ public class VisApp extends JPanel implements ActionListener {
 		selectPanel.addSelectedItem(genomeName);
 	}
 	
+	//called from vispanel, updates selected on select panel
+	public void removeRowSelected(String genomeName) {
+		selectPanel.removeItem(genomeName);
+	}
+	
 	public ArrayList<String> getAllGenomeNames(){
 		return wholeMatrix.getAllGenomeNames();
 	}
@@ -314,7 +320,6 @@ public class VisApp extends JPanel implements ActionListener {
 		selectionMatFrame.setTitle("Selection");
 		selectionMatFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		selectionMatFrame.setBounds(100, 100, 1000, 700);
-		
 		
 		Matrix2DVis zoomPanel1 = new Matrix2DVis(smallMat, this);
 		zoomPanel1.setSliderListener(updateSlider);
